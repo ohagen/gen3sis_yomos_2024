@@ -6,8 +6,9 @@
 
 <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=yes">
 
+<meta name="author" content="Oskar Hagen (oskar@hagen.bio)">
 
-<title>Workshop gen3sis</title>
+<title>Gen3sis workshop</title>
 <style>
 code{white-space: pre-wrap;}
 span.smallcaps{font-variant: small-caps;}
@@ -78,14 +79,18 @@ pre > code.sourceCode > span > a:first-child::before { text-decoration: underlin
   <nav id="TOC" role="doc-toc" class="toc-active">
     <h2 id="toc-title">Table of contents</h2>
    
-  <ul class="collapse">
+  <ul>
   <li><a href="#preamble" id="toc-preamble" class="nav-link active" data-scroll-target="#preamble">Preamble</a></li>
   <li><a href="#introduction" id="toc-introduction" class="nav-link" data-scroll-target="#introduction">Introduction</a></li>
   <li><a href="#setting-up-the-r-environment" id="toc-setting-up-the-r-environment" class="nav-link" data-scroll-target="#setting-up-the-r-environment">1. Setting up the R environment</a></li>
-  <li><a href="#understanding-the-basics-of-gen3sis." id="toc-understanding-the-basics-of-gen3sis." class="nav-link" data-scroll-target="#understanding-the-basics-of-gen3sis.">2. Understanding the basics of <code>gen3sis</code>.</a></li>
-  <li><a href="#run-a-basic-simulation." id="toc-run-a-basic-simulation." class="nav-link" data-scroll-target="#run-a-basic-simulation.">3. Run a basic simulation.</a></li>
-  <li><a href="#customize-simulations." id="toc-customize-simulations." class="nav-link" data-scroll-target="#customize-simulations.">4. Customize simulations.</a></li>
-  <li><a href="#troubleshoot." id="toc-troubleshoot." class="nav-link" data-scroll-target="#troubleshoot.">5. Troubleshoot.</a></li>
+  <li><a href="#understanding-the-basics-of-gen3sis" id="toc-understanding-the-basics-of-gen3sis" class="nav-link" data-scroll-target="#understanding-the-basics-of-gen3sis">2. Understanding the basics of <code>gen3sis</code></a>
+  <ul class="collapse">
+  <li><a href="#landscape" id="toc-landscape" class="nav-link" data-scroll-target="#landscape">2.1 Landscape</a></li>
+  <li><a href="#config" id="toc-config" class="nav-link" data-scroll-target="#config">2.2 Config</a></li>
+  </ul></li>
+  <li><a href="#run-a-basic-simulation" id="toc-run-a-basic-simulation" class="nav-link" data-scroll-target="#run-a-basic-simulation">3. Run a basic simulation</a></li>
+  <li><a href="#customize-simulations" id="toc-customize-simulations" class="nav-link" data-scroll-target="#customize-simulations">4. Customize simulations</a></li>
+  <li><a href="#troubleshoot" id="toc-troubleshoot" class="nav-link" data-scroll-target="#troubleshoot">5. Troubleshoot</a></li>
   </ul>
 </nav>
 </div>
@@ -93,7 +98,7 @@ pre > code.sourceCode > span > a:first-child::before { text-decoration: underlin
 
 <header id="title-block-header" class="quarto-title-block default">
 <div class="quarto-title">
-<h1 class="title">Workshop gen3sis</h1>
+<h1 class="title">Gen3sis workshop</h1>
 <p class="subtitle lead">Building and running custom mechanistic eco-evolutionary biodiversity models</p>
 </div>
 
@@ -102,10 +107,9 @@ pre > code.sourceCode > span > a:first-child::before { text-decoration: underlin
 <div class="quarto-title-meta">
 
     <div>
-    <div class="quarto-title-meta-heading">Authors</div>
+    <div class="quarto-title-meta-heading">Author</div>
     <div class="quarto-title-meta-contents">
              <p>Oskar Hagen (oskar@hagen.bio) </p>
-             <p>Juliana Ciccheto </p>
           </div>
   </div>
     
@@ -116,31 +120,44 @@ pre > code.sourceCode > span > a:first-child::before { text-decoration: underlin
 
 </header>
 
-<div class="quarto-figure quarto-figure-center">
-<figure class="figure">
-<p><img src="https://static.wixstatic.com/media/c2b417_0e2b0aceec0f49dfb07ae5b40a912e56~mv2.png/v1/crop/x_0,y_0,w_1100,h_431,q_90,enc_auto/YoMos-Logo-Querformat_websitebackgorund_.png" title="Yomos" class="img-fluid figure-img"></p>
-<figcaption class="figure-caption">16.05.2024, Federseestation in Bad Buchau, Germany</figcaption>
-</figure>
+<div id="left" class="flex-item" style="flex: 1;">
+<p><img src="https://static.wixstatic.com/media/c2b417_0e2b0aceec0f49dfb07ae5b40a912e56~mv2.png/v1/crop/x_0,y_0,w_1100,h_431,q_90,enc_auto/YoMos-Logo-Querformat_websitebackgorund_.png" style="width: 50%;"></p>
+</div>
+<p>Yomos 2024<br>
+April 13-17, 2024<br>
+Federseestation, Bad Buchau, Germany</p>
+<div id="right" class="flex-item" style="flex: 1;">
+<p><img src="qr-code-workshop.jpg" style="width: 100px;"></p>
 </div>
 <section id="preamble" class="level2">
 <h2 class="anchored" data-anchor-id="preamble">Preamble</h2>
+<style>
+    .top-left-image {
+        float: left;
+        width: 50%;
+        margin-right: 20px;
+    }
+    .clear-float {
+        clear: both;
+    }
+</style>
+<p><img src="https://raw.githubusercontent.com/ohagen/DispDiv3/main/inst/logo/dispdiv3.png" alt="gen3sis art" class="top-left-image"></p>
 <p>This workshop aims to: disseminate knowledge on utilizing gen3sis for various research inquiries, and provide practical experience in the mechanistic modeling cycle. The course will briefly introduce the philosophical context of natural science and the principles of mechanistic models. Participants will engage in hands-on exercises, applying gen3sis to explore hypotheses concerning the genesis and maintenance of biodiversity within the R programming environment, with opportunities to design their own research questions. The workshop primarily employs simulated data, culminating in insights on connecting processes and patterns within biodiversity research. To prepare, bring a laptop with R and the latest version of gen3sis. If you want to come even more prepared and make the most of the course, I recommend reading the <a href="https://doi.org/10.1371/journal.pbio.3001340">methods paper</a> and having a look at this <a href="https://github.com/ohagen/DispDiv3">repo</a>, containing some of the materials (i.e.&nbsp;landscapes and configuration files) used here.</p>
 </section>
 <section id="introduction" class="level2">
 <h2 class="anchored" data-anchor-id="introduction">Introduction</h2>
-<p>Welcome to this workshop on <code>gen3sis</code>, an R package designed for simulating ecological e evolutionary dynamics over time and space. In this two-hour workshop, we will:</p>
+<p>Welcome to the workshop on <code>gen3sis</code>, an R package designed for simulating ecological e evolutionary dynamics over time and space. In this two-hour workshop, we will:</p>
 <ol type="1">
-<li>Set up the R environment.<br>
-</li>
-<li>Understand the basics of <code>gen3sis</code>.</li>
-<li>Run a basic simulation.</li>
-<li>Customize simulations.</li>
-<li>Troubleshoot.</li>
+<li>Set up the R environment</li>
+<li>Understand the basics of <code>gen3sis</code></li>
+<li>Run a basic simulation</li>
+<li>Customize simulations</li>
+<li>Troubleshoot</li>
 </ol>
 </section>
 <section id="setting-up-the-r-environment" class="level2">
 <h2 class="anchored" data-anchor-id="setting-up-the-r-environment">1. Setting up the R environment</h2>
-<p>We’ll need the <code>gen3sis</code> R-package along with configuration and landscapes from this <a href="https://github.com/ohagen/DispDiv3">repo</a>. Please download the repo and create a new R script in the same directory. There you can copy and paste the code from the sections bellow.</p>
+<p>We’ll need the <code>gen3sis</code> R-package along with configuration and landscapes from this <a href="https://github.com/ohagen/DispDiv3">repo</a>. Please download the repo and create a new R script in the same directory. There you can copy and paste the code from the sections bellow and for your convenience use <a href="myscript.R">myscrip.R</a></p>
 <div class="cell">
 <div class="sourceCode cell-code" id="cb1"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb1-1"><a href="#cb1-1" aria-hidden="true" tabindex="-1"></a><span class="co"># install and load gen3sis</span></span>
 <span id="cb1-2"><a href="#cb1-2" aria-hidden="true" tabindex="-1"></a><span class="fu">require</span>(gen3sis)</span>
@@ -152,25 +169,25 @@ pre > code.sourceCode > span > a:first-child::before { text-decoration: underlin
 <div class="sourceCode cell-code" id="cb3"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb3-1"><a href="#cb3-1" aria-hidden="true" tabindex="-1"></a><span class="co"># we will also use terra for landscape visualization</span></span>
 <span id="cb3-2"><a href="#cb3-2" aria-hidden="true" tabindex="-1"></a><span class="fu">require</span>(terra)</span>
 <span id="cb3-3"><a href="#cb3-3" aria-hidden="true" tabindex="-1"></a><span class="co"># package here for simple directory configuration</span></span>
-<span id="cb3-4"><a href="#cb3-4" aria-hidden="true" tabindex="-1"></a><span class="fu">require</span>(here)</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+<span id="cb3-4"><a href="#cb3-4" aria-hidden="true" tabindex="-1"></a><span class="fu">require</span>(here)</span>
+<span id="cb3-5"><a href="#cb3-5" aria-hidden="true" tabindex="-1"></a><span class="co"># package ape for phylogenetic analysis</span></span>
+<span id="cb3-6"><a href="#cb3-6" aria-hidden="true" tabindex="-1"></a><span class="fu">require</span>(ape)</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
 </div>
-<p>Download landscape and configuration files</p>
+<p>Get the landscape and configuration files. If you dont like waiting and would like your simulations to run faster, download this <a href="https://www.dropbox.com/scl/fo/lzxzee5hi0cqiu6tglmgk/AFrnEBV83Sd6tdo1Kdc-m7g?rlkey=9a49gsorhikzvt6f4oibjdtkj&amp;dl=0">folder</a> at dropbox and place the <em>distances_full</em> folder inside the <em>space</em> folder, along the <em>distances_local</em> folder.</p>
 <div class="cell">
-<div class="sourceCode cell-code" id="cb4"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb4-1"><a href="#cb4-1" aria-hidden="true" tabindex="-1"></a><span class="co"># get home dir</span></span>
-<span id="cb4-2"><a href="#cb4-2" aria-hidden="true" tabindex="-1"></a>here<span class="sc">::</span><span class="fu">i_am</span>(<span class="st">"gen3sis_workshop.qmd"</span>)</span>
-<span id="cb4-3"><a href="#cb4-3" aria-hidden="true" tabindex="-1"></a><span class="co"># set path to directory containing the landscape</span></span>
-<span id="cb4-4"><a href="#cb4-4" aria-hidden="true" tabindex="-1"></a>landscape_dir <span class="ot">&lt;-</span> <span class="fu">here</span>(<span class="st">"space"</span>)</span>
-<span id="cb4-5"><a href="#cb4-5" aria-hidden="true" tabindex="-1"></a><span class="co"># look at folder structure</span></span>
-<span id="cb4-6"><a href="#cb4-6" aria-hidden="true" tabindex="-1"></a><span class="fu">list.files</span>(landscape_dir)</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+<div class="sourceCode cell-code" id="cb4"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb4-1"><a href="#cb4-1" aria-hidden="true" tabindex="-1"></a><span class="co"># set path to directory containing the landscape</span></span>
+<span id="cb4-2"><a href="#cb4-2" aria-hidden="true" tabindex="-1"></a>landscape_dir <span class="ot">&lt;-</span> <span class="fu">here</span>(<span class="st">"space"</span>)</span>
+<span id="cb4-3"><a href="#cb4-3" aria-hidden="true" tabindex="-1"></a><span class="co"># look at folder structure</span></span>
+<span id="cb4-4"><a href="#cb4-4" aria-hidden="true" tabindex="-1"></a><span class="fu">list.files</span>(landscape_dir)</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
 <div class="cell-output cell-output-stdout">
-<pre><code>[1] "distances_local" "landscapes.rds" </code></pre>
+<pre><code>[1] "distances_full"  "distances_local" "landscapes.rds" </code></pre>
 </div>
 <div class="sourceCode cell-code" id="cb6"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb6-1"><a href="#cb6-1" aria-hidden="true" tabindex="-1"></a><span class="co"># set path to config_file</span></span>
 <span id="cb6-2"><a href="#cb6-2" aria-hidden="true" tabindex="-1"></a>config_file <span class="ot">&lt;-</span> <span class="fu">here</span>(<span class="st">"config/config_simple.R"</span>)</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
 </div>
 </section>
-<section id="understanding-the-basics-of-gen3sis." class="level2">
-<h2 class="anchored" data-anchor-id="understanding-the-basics-of-gen3sis.">2. Understanding the basics of <code>gen3sis</code>.</h2>
+<section id="understanding-the-basics-of-gen3sis" class="level2">
+<h2 class="anchored" data-anchor-id="understanding-the-basics-of-gen3sis">2. Understanding the basics of <code>gen3sis</code></h2>
 <p>Gen3sis is an engine that simulates eco-evolutionary processes at the population level. It utilizes a landscape containing environmental variables that evolve over time, alongside a configuration file housing the eco-evolutionary rules.</p>
 <section id="landscape" class="level3">
 <h3 class="anchored" data-anchor-id="landscape">2.1 Landscape</h3>
@@ -213,43 +230,44 @@ pre > code.sourceCode > span > a:first-child::before { text-decoration: underlin
 <span id="cb11-3"><a href="#cb11-3" aria-hidden="true" tabindex="-1"></a><span class="fu">plot</span>(r_first <span class="ot">&lt;-</span> <span class="fu">rast</span>(lc<span class="sc">$</span>mean_temp[ ,<span class="fu">c</span>(<span class="st">"x"</span>, <span class="st">"y"</span>, first_step)], <span class="at">type=</span><span class="st">"xyz"</span>), <span class="at">main=</span><span class="st">"first"</span>)</span>
 <span id="cb11-4"><a href="#cb11-4" aria-hidden="true" tabindex="-1"></a><span class="fu">plot</span>(r_last <span class="ot">&lt;-</span> <span class="fu">rast</span>(lc<span class="sc">$</span>mean_temp[ ,<span class="fu">c</span>(<span class="st">"x"</span>, <span class="st">"y"</span>, <span class="st">"0"</span>)], <span class="at">type=</span><span class="st">"xyz"</span>), <span class="at">main=</span><span class="st">"last"</span>)</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
 <div class="cell-output-display">
-<p><img src="gen3sis_workshop_files/figure-html/unnamed-chunk-3-1.png" class="img-fluid" width="672"></p>
+<p><img src="gen3sis_workshop_files/figure-html/unnamed-chunk-4-1.png" class="img-fluid" width="672"></p>
 </div>
+<div class="sourceCode cell-code" id="cb12"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb12-1"><a href="#cb12-1" aria-hidden="true" tabindex="-1"></a><span class="fu">par</span>(<span class="at">mfrow=</span><span class="fu">c</span>(<span class="dv">1</span>,<span class="dv">1</span>)) <span class="co"># set it back</span></span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
 </div>
 <div style="background-color: lightgreen; padding: 1px;">
 <p>🏋💻 <strong>Exercise</strong> [max 10 min] Create a way to visualize the last 100 time steps of this gen3sis input. If possible think of abstracting for any x,y,z1,z2,z3… temporal data-frame. If possible, try to make a function.</p>
 <details>
 <div class="cell">
-<div class="sourceCode cell-code" id="cb12"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb12-1"><a href="#cb12-1" aria-hidden="true" tabindex="-1"></a><span class="co"># solution 1</span></span>
-<span id="cb12-2"><a href="#cb12-2" aria-hidden="true" tabindex="-1"></a><span class="cf">for</span> (ti <span class="cf">in</span> <span class="dv">100</span><span class="sc">:</span><span class="dv">0</span>) {</span>
-<span id="cb12-3"><a href="#cb12-3" aria-hidden="true" tabindex="-1"></a>  ri <span class="ot">&lt;-</span> <span class="fu">rast</span>(lc<span class="sc">$</span>elevation[,<span class="fu">c</span>(<span class="st">"x"</span>, <span class="st">"y"</span>, <span class="fu">as.character</span>(ti))], <span class="at">type=</span><span class="st">"xyz"</span>)</span>
-<span id="cb12-4"><a href="#cb12-4" aria-hidden="true" tabindex="-1"></a>  <span class="fu">plot</span>(ri, <span class="at">main=</span><span class="fu">paste</span>(ti<span class="sc">/</span><span class="dv">100</span>, <span class="st">"Ma"</span>)) <span class="co"># divide by 100 to get Ma since 1 time-step =10 kyr</span></span>
-<span id="cb12-5"><a href="#cb12-5" aria-hidden="true" tabindex="-1"></a>  <span class="fu">Sys.sleep</span>(<span class="fl">0.1</span>)</span>
-<span id="cb12-6"><a href="#cb12-6" aria-hidden="true" tabindex="-1"></a>}</span>
-<span id="cb12-7"><a href="#cb12-7" aria-hidden="true" tabindex="-1"></a><span class="co"># solution 2</span></span>
-<span id="cb12-8"><a href="#cb12-8" aria-hidden="true" tabindex="-1"></a><span class="co"># define animation function</span></span>
-<span id="cb12-9"><a href="#cb12-9" aria-hidden="true" tabindex="-1"></a>plot_landenv <span class="ot">&lt;-</span>  <span class="cf">function</span>(df, <span class="at">times=</span><span class="dv">100</span><span class="sc">:</span><span class="dv">0</span>, <span class="at">reverse=</span>F, <span class="at">speed=</span><span class="fl">0.1</span>){</span>
-<span id="cb12-10"><a href="#cb12-10" aria-hidden="true" tabindex="-1"></a>  <span class="co"># df is a data frame with x, y coordinates and time steps as columns with environmental variables</span></span>
-<span id="cb12-11"><a href="#cb12-11" aria-hidden="true" tabindex="-1"></a>  <span class="co"># reverse is a boolean. Reverse the order of time steps?</span></span>
-<span id="cb12-12"><a href="#cb12-12" aria-hidden="true" tabindex="-1"></a>  <span class="co"># times is either a vector of time steps or a character "all"</span></span>
-<span id="cb12-13"><a href="#cb12-13" aria-hidden="true" tabindex="-1"></a>  <span class="co"># speed in seconds</span></span>
-<span id="cb12-14"><a href="#cb12-14" aria-hidden="true" tabindex="-1"></a>  <span class="co">#df &lt;- lc$temp</span></span>
-<span id="cb12-15"><a href="#cb12-15" aria-hidden="true" tabindex="-1"></a>  <span class="cf">if</span> (times[<span class="dv">1</span>]<span class="sc">==</span><span class="st">"all"</span>){</span>
-<span id="cb12-16"><a href="#cb12-16" aria-hidden="true" tabindex="-1"></a>   times <span class="ot">&lt;-</span> <span class="fu">names</span>(df)[<span class="sc">!</span><span class="fu">names</span>(df)<span class="sc">%in%</span><span class="fu">c</span>(<span class="st">"x"</span>, <span class="st">"y"</span>)] </span>
-<span id="cb12-17"><a href="#cb12-17" aria-hidden="true" tabindex="-1"></a>  }</span>
-<span id="cb12-18"><a href="#cb12-18" aria-hidden="true" tabindex="-1"></a>  <span class="cf">if</span> (reverse){</span>
-<span id="cb12-19"><a href="#cb12-19" aria-hidden="true" tabindex="-1"></a>    times <span class="ot">&lt;-</span> <span class="fu">rev</span>(times)</span>
-<span id="cb12-20"><a href="#cb12-20" aria-hidden="true" tabindex="-1"></a>  }</span>
-<span id="cb12-21"><a href="#cb12-21" aria-hidden="true" tabindex="-1"></a>  <span class="cf">for</span> (ti <span class="cf">in</span> times){</span>
-<span id="cb12-22"><a href="#cb12-22" aria-hidden="true" tabindex="-1"></a>    ri <span class="ot">&lt;-</span> <span class="fu">rast</span>(df[,<span class="fu">c</span>(<span class="st">"x"</span>, <span class="st">"y"</span>, ti)], <span class="at">type=</span><span class="st">"xyz"</span>)</span>
-<span id="cb12-23"><a href="#cb12-23" aria-hidden="true" tabindex="-1"></a>    <span class="fu">plot</span>(ri, <span class="at">main=</span><span class="fu">paste</span>(<span class="fu">as.numeric</span>(ti)<span class="sc">/</span><span class="dv">100</span>, <span class="st">"Ma"</span>))</span>
-<span id="cb12-24"><a href="#cb12-24" aria-hidden="true" tabindex="-1"></a>    <span class="fu">Sys.sleep</span>(speed)</span>
-<span id="cb12-25"><a href="#cb12-25" aria-hidden="true" tabindex="-1"></a>  }</span>
-<span id="cb12-26"><a href="#cb12-26" aria-hidden="true" tabindex="-1"></a>}</span>
-<span id="cb12-27"><a href="#cb12-27" aria-hidden="true" tabindex="-1"></a><span class="co"># call animation function</span></span>
-<span id="cb12-28"><a href="#cb12-28" aria-hidden="true" tabindex="-1"></a><span class="fu">plot_landenv</span>(lc<span class="sc">$</span>elevation, <span class="at">times=</span><span class="fu">c</span>(<span class="dv">100</span><span class="sc">:</span><span class="dv">0</span>), <span class="at">speed=</span><span class="fl">0.1</span>)</span>
-<span id="cb12-29"><a href="#cb12-29" aria-hidden="true" tabindex="-1"></a><span class="co"># example of plotting entire time series</span></span>
-<span id="cb12-30"><a href="#cb12-30" aria-hidden="true" tabindex="-1"></a><span class="co"># plot_landenv(lc$min_temp, times="all", reverse=T, speed=0.03)</span></span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+<div class="sourceCode cell-code" id="cb13"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb13-1"><a href="#cb13-1" aria-hidden="true" tabindex="-1"></a><span class="co"># solution 1</span></span>
+<span id="cb13-2"><a href="#cb13-2" aria-hidden="true" tabindex="-1"></a><span class="cf">for</span> (ti <span class="cf">in</span> <span class="dv">100</span><span class="sc">:</span><span class="dv">0</span>) {</span>
+<span id="cb13-3"><a href="#cb13-3" aria-hidden="true" tabindex="-1"></a>  ri <span class="ot">&lt;-</span> <span class="fu">rast</span>(lc<span class="sc">$</span>elevation[,<span class="fu">c</span>(<span class="st">"x"</span>, <span class="st">"y"</span>, <span class="fu">as.character</span>(ti))], <span class="at">type=</span><span class="st">"xyz"</span>)</span>
+<span id="cb13-4"><a href="#cb13-4" aria-hidden="true" tabindex="-1"></a>  <span class="fu">plot</span>(ri, <span class="at">main=</span><span class="fu">paste</span>(ti<span class="sc">/</span><span class="dv">100</span>, <span class="st">"Ma"</span>)) <span class="co"># divide by 100 to get Ma since 1 time-step =10 kyr</span></span>
+<span id="cb13-5"><a href="#cb13-5" aria-hidden="true" tabindex="-1"></a>  <span class="fu">Sys.sleep</span>(<span class="fl">0.1</span>)</span>
+<span id="cb13-6"><a href="#cb13-6" aria-hidden="true" tabindex="-1"></a>}</span>
+<span id="cb13-7"><a href="#cb13-7" aria-hidden="true" tabindex="-1"></a><span class="co"># solution 2</span></span>
+<span id="cb13-8"><a href="#cb13-8" aria-hidden="true" tabindex="-1"></a><span class="co"># define animation function</span></span>
+<span id="cb13-9"><a href="#cb13-9" aria-hidden="true" tabindex="-1"></a>plot_landenv <span class="ot">&lt;-</span>  <span class="cf">function</span>(df, <span class="at">times=</span><span class="dv">100</span><span class="sc">:</span><span class="dv">0</span>, <span class="at">reverse=</span>F, <span class="at">speed=</span><span class="fl">0.1</span>){</span>
+<span id="cb13-10"><a href="#cb13-10" aria-hidden="true" tabindex="-1"></a>  <span class="co"># df is a data frame with x, y coordinates and time steps as columns with environmental variables</span></span>
+<span id="cb13-11"><a href="#cb13-11" aria-hidden="true" tabindex="-1"></a>  <span class="co"># reverse is a boolean. Reverse the order of time steps?</span></span>
+<span id="cb13-12"><a href="#cb13-12" aria-hidden="true" tabindex="-1"></a>  <span class="co"># times is either a vector of time steps or a character "all"</span></span>
+<span id="cb13-13"><a href="#cb13-13" aria-hidden="true" tabindex="-1"></a>  <span class="co"># speed in seconds</span></span>
+<span id="cb13-14"><a href="#cb13-14" aria-hidden="true" tabindex="-1"></a>  <span class="co">#df &lt;- lc$temp</span></span>
+<span id="cb13-15"><a href="#cb13-15" aria-hidden="true" tabindex="-1"></a>  <span class="cf">if</span> (times[<span class="dv">1</span>]<span class="sc">==</span><span class="st">"all"</span>){</span>
+<span id="cb13-16"><a href="#cb13-16" aria-hidden="true" tabindex="-1"></a>   times <span class="ot">&lt;-</span> <span class="fu">names</span>(df)[<span class="sc">!</span><span class="fu">names</span>(df)<span class="sc">%in%</span><span class="fu">c</span>(<span class="st">"x"</span>, <span class="st">"y"</span>)] </span>
+<span id="cb13-17"><a href="#cb13-17" aria-hidden="true" tabindex="-1"></a>  }</span>
+<span id="cb13-18"><a href="#cb13-18" aria-hidden="true" tabindex="-1"></a>  <span class="cf">if</span> (reverse){</span>
+<span id="cb13-19"><a href="#cb13-19" aria-hidden="true" tabindex="-1"></a>    times <span class="ot">&lt;-</span> <span class="fu">rev</span>(times)</span>
+<span id="cb13-20"><a href="#cb13-20" aria-hidden="true" tabindex="-1"></a>  }</span>
+<span id="cb13-21"><a href="#cb13-21" aria-hidden="true" tabindex="-1"></a>  <span class="cf">for</span> (ti <span class="cf">in</span> times){</span>
+<span id="cb13-22"><a href="#cb13-22" aria-hidden="true" tabindex="-1"></a>    ri <span class="ot">&lt;-</span> <span class="fu">rast</span>(df[,<span class="fu">c</span>(<span class="st">"x"</span>, <span class="st">"y"</span>, ti)], <span class="at">type=</span><span class="st">"xyz"</span>)</span>
+<span id="cb13-23"><a href="#cb13-23" aria-hidden="true" tabindex="-1"></a>    <span class="fu">plot</span>(ri, <span class="at">main=</span><span class="fu">paste</span>(<span class="fu">as.numeric</span>(ti)<span class="sc">/</span><span class="dv">100</span>, <span class="st">"Ma"</span>))</span>
+<span id="cb13-24"><a href="#cb13-24" aria-hidden="true" tabindex="-1"></a>    <span class="fu">Sys.sleep</span>(speed)</span>
+<span id="cb13-25"><a href="#cb13-25" aria-hidden="true" tabindex="-1"></a>  }</span>
+<span id="cb13-26"><a href="#cb13-26" aria-hidden="true" tabindex="-1"></a>}</span>
+<span id="cb13-27"><a href="#cb13-27" aria-hidden="true" tabindex="-1"></a><span class="co"># call animation function</span></span>
+<span id="cb13-28"><a href="#cb13-28" aria-hidden="true" tabindex="-1"></a><span class="fu">plot_landenv</span>(lc<span class="sc">$</span>elevation, <span class="at">times=</span><span class="fu">c</span>(<span class="dv">100</span><span class="sc">:</span><span class="dv">0</span>), <span class="at">speed=</span><span class="fl">0.1</span>)</span>
+<span id="cb13-29"><a href="#cb13-29" aria-hidden="true" tabindex="-1"></a><span class="co"># example of plotting entire time series</span></span>
+<span id="cb13-30"><a href="#cb13-30" aria-hidden="true" tabindex="-1"></a><span class="co"># plot_landenv(lc$min_temp, times="all", reverse=T, speed=0.03)</span></span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
 </div>
 </details>
 </div>
@@ -258,16 +276,16 @@ pre > code.sourceCode > span > a:first-child::before { text-decoration: underlin
 <h3 class="anchored" data-anchor-id="config">2.2 Config</h3>
 <p>Open this config file in Rstudio or any text editor to see the rules that will be applied to the landscape.</p>
 <div class="cell">
-<div class="sourceCode cell-code" id="cb13"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb13-1"><a href="#cb13-1" aria-hidden="true" tabindex="-1"></a><span class="co"># load config</span></span>
-<span id="cb13-2"><a href="#cb13-2" aria-hidden="true" tabindex="-1"></a>cf <span class="ot">&lt;-</span> <span class="fu">create_input_config</span>(<span class="at">config_file =</span> <span class="fu">here</span>(<span class="st">"config/config_simple.R"</span>))</span>
-<span id="cb13-3"><a href="#cb13-3" aria-hidden="true" tabindex="-1"></a><span class="co"># list all main elements of the config file</span></span>
-<span id="cb13-4"><a href="#cb13-4" aria-hidden="true" tabindex="-1"></a><span class="fu">names</span>(cf<span class="sc">$</span>gen3sis)</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+<div class="sourceCode cell-code" id="cb14"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb14-1"><a href="#cb14-1" aria-hidden="true" tabindex="-1"></a><span class="co"># load config</span></span>
+<span id="cb14-2"><a href="#cb14-2" aria-hidden="true" tabindex="-1"></a>cf <span class="ot">&lt;-</span> <span class="fu">create_input_config</span>(<span class="at">config_file =</span> <span class="fu">here</span>(<span class="st">"config/config_simple.R"</span>))</span>
+<span id="cb14-3"><a href="#cb14-3" aria-hidden="true" tabindex="-1"></a><span class="co"># list all main elements of the config file</span></span>
+<span id="cb14-4"><a href="#cb14-4" aria-hidden="true" tabindex="-1"></a><span class="fu">names</span>(cf<span class="sc">$</span>gen3sis)</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
 <div class="cell-output cell-output-stdout">
 <pre><code>[1] "general"        "initialization" "dispersal"      "speciation"    
 [5] "mutation"       "ecology"       </code></pre>
 </div>
-<div class="sourceCode cell-code" id="cb15"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb15-1"><a href="#cb15-1" aria-hidden="true" tabindex="-1"></a><span class="co"># list all elements of the general section, i.e. the main settings and not so much on the eco-evolutionary processes</span></span>
-<span id="cb15-2"><a href="#cb15-2" aria-hidden="true" tabindex="-1"></a><span class="fu">names</span>(cf<span class="sc">$</span>gen3sis<span class="sc">$</span>general)</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+<div class="sourceCode cell-code" id="cb16"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb16-1"><a href="#cb16-1" aria-hidden="true" tabindex="-1"></a><span class="co"># list all elements of the general section, i.e. the main settings and not so much on the eco-evolutionary processes</span></span>
+<span id="cb16-2"><a href="#cb16-2" aria-hidden="true" tabindex="-1"></a><span class="fu">names</span>(cf<span class="sc">$</span>gen3sis<span class="sc">$</span>general)</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
 <div class="cell-output cell-output-stdout">
 <pre><code>[1] "random_seed"                      "start_time"                      
 [3] "end_time"                         "max_number_of_species"           
@@ -277,7 +295,7 @@ pre > code.sourceCode > span > a:first-child::before { text-decoration: underlin
 </div>
 </div>
 <div style="background-color: lightgreen; padding: 1px;">
-🏋💻 <strong>Exercise</strong> [max 10 min] Open a config file and go though the eco-evolutionary rules that will be applied to the landscape.
+🏋💻 <strong>Exercise</strong> [max 10 min] Open the config file config_simple and go though the eco-evolutionary rules that will be applied to the landscape.
 <details>
 <p><strong>Settings</strong></p>
 <p>We start our simulation at the latest avaiable time, i.e.&nbsp;5Ma, which corresponds to time step 500 since 1 time-step = 10 kyr. We end it a the latest available time-step. Sometimes, simulations can go forever, to avoid this we limit the maximum total number of species alive in a simulation to 50000 with max_number_of_species and the maximum number of species within one site to 20000 with max_number_of_coexisting_species. This stops and flags simulations that generate too many species (time constrain). We define which traits we will consider in our simulation with traits_names, in our example, species have a dispersal ability a optimum temperature and a temperature width trait.</p>
@@ -285,17 +303,128 @@ pre > code.sourceCode > span > a:first-child::before { text-decoration: underlin
 <p>The observer function saves and plot changes (real-time during model execution) over time in the conditions of the virtual world (biotic and abiotic) by saving custom information at designated time steps.</p>
 <p><strong>Initialization</strong></p>
 <p>The create_ancestor_species function creates the first specie(s) in the simulation. In this case, we create one species spread across all avaiable sites with low dispersal ability, optimum temperature at 20 degrees C and a temperature width (+-1).</p>
+<p><strong> Dispersal </strong></p>
+<p>The dispersal function iterates over all species populations and determines the connectivity between sites, crucial for trait evolution and specialization, as well as the colonization of new sites. In our example, species dispersal is stochastic and uniform across all species. I.e. an exponential distribution with the rate denominator as the dispersal trait value.</p>
+<p><strong> Speciation </strong></p>
+<p>The speciation iterates over every species separately, registers populations’ geographic occupancy (species range), and determines when geographic isolation between population clusters is higher than a user-defined threshold, triggering a lineage splitting event of cladogenesis. The clustering of occupied sites is based on the species’ dispersal capacity and the landscape connection costs. Over time, disconnected clusters gradually accumulate incompatibility, analogous to genetic differentiation. When the divergence between clusters is above the speciation threshold, those clusters become two or more distinct species, and a divergence matrix reset follows. On the other hand, if geographic clusters come into secondary contact before the speciation occurs, they coalesce and incompatibilities are gradually reduced to zero.</p>
+<p><strong>Evolution</strong></p>
+<p>Think of it as trait evolution. Clustered populations (exchanging genes) have their trait homogenized. If weighted by abundance a trait of a population that is doing well in a site, as dictated by the ecology function, will contribute more to the average trait of a cluster. Populations mutate based on a normal distribution with standard deviation 0.001, possibly increasing or decreasing species optimum temperature.</p>
+<p><strong> Ecology </strong></p>
+<p>The ecology function determines the abundance or presence of the populations in occupied sites of each species. The function iterates over all occupied sites and updates the species population abundances or presences on the basis of local environmental values, updated co-occurrence patterns and species traits. In this example we use only presence/absence data, i.e.&nbsp;abundances 0 or 1.</p>
 </details>
-</div></section>
+</div>
 </section>
-<section id="run-a-basic-simulation." class="level2">
-<h2 class="anchored" data-anchor-id="run-a-basic-simulation.">3. Run a basic simulation.</h2>
 </section>
-<section id="customize-simulations." class="level2">
-<h2 class="anchored" data-anchor-id="customize-simulations.">4. Customize simulations.</h2>
+<section id="run-a-basic-simulation" class="level2">
+<h2 class="anchored" data-anchor-id="run-a-basic-simulation">3. Run a basic simulation</h2>
+<p>It’s time to run a simulation, we use the config_simple and archipelago system we are familiar with and set verbose to 2 in order to get more information on the progress of the simulation.</p>
+<div class="cell">
+<div class="sourceCode cell-code" id="cb18"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb18-1"><a href="#cb18-1" aria-hidden="true" tabindex="-1"></a><span class="co"># run simulation</span></span>
+<span id="cb18-2"><a href="#cb18-2" aria-hidden="true" tabindex="-1"></a>sim <span class="ot">&lt;-</span> <span class="fu">run_simulation</span>(<span class="at">config =</span> <span class="fu">here</span>(<span class="st">"config/config_simple.R"</span>), </span>
+<span id="cb18-3"><a href="#cb18-3" aria-hidden="true" tabindex="-1"></a>                      <span class="at">landscape =</span> <span class="fu">here</span>(<span class="st">"space"</span>), </span>
+<span id="cb18-4"><a href="#cb18-4" aria-hidden="true" tabindex="-1"></a>                      <span class="at">output_directory =</span> <span class="fu">here</span>(<span class="st">"output"</span>))</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+</div>
+<p>On sim we store the simulation output summary, while most of the information and large data is/should be stored in the output directory according to the observer function. If you don’t want to run the simulation, you can load the sim object from the repo.</p>
+<div class="cell">
+<div class="sourceCode cell-code" id="cb19"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb19-1"><a href="#cb19-1" aria-hidden="true" tabindex="-1"></a>sim <span class="ot">&lt;-</span> <span class="fu">readRDS</span>(<span class="fu">here</span>(<span class="st">"output/config_simple/sgen3sis.rds"</span>))</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+</div>
+<p>In addition to the simulation output summary, we include a flag indicating whether the simulation completed successfully or the criteria for stopping, such as an excessive number of species. This section also provides system information and simulation-specific parameters.</p>
+<div class="cell">
+<div class="sourceCode cell-code" id="cb20"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb20-1"><a href="#cb20-1" aria-hidden="true" tabindex="-1"></a><span class="co">#check elements inside the sim object</span></span>
+<span id="cb20-2"><a href="#cb20-2" aria-hidden="true" tabindex="-1"></a><span class="fu">names</span>(sim)</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+<div class="cell-output cell-output-stdout">
+<pre><code>[1] "summary"    "flag"       "system"     "parameters"</code></pre>
+</div>
+<div class="sourceCode cell-code" id="cb22"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb22-1"><a href="#cb22-1" aria-hidden="true" tabindex="-1"></a><span class="co"># visualize the outputs</span></span>
+<span id="cb22-2"><a href="#cb22-2" aria-hidden="true" tabindex="-1"></a><span class="fu">plot_summary</span>(sim)</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+<div class="cell-output-display">
+<p><img src="gen3sis_workshop_files/figure-html/unnamed-chunk-9-1.png" class="img-fluid" width="672"></p>
+</div>
+<div class="sourceCode cell-code" id="cb23"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb23-1"><a href="#cb23-1" aria-hidden="true" tabindex="-1"></a><span class="co"># plot richness from summary in custom fashion</span></span>
+<span id="cb23-2"><a href="#cb23-2" aria-hidden="true" tabindex="-1"></a>na_mask <span class="ot">&lt;-</span> <span class="fu">is.na</span>(lc<span class="sc">$</span>elevation[,<span class="st">"0"</span>])</span>
+<span id="cb23-3"><a href="#cb23-3" aria-hidden="true" tabindex="-1"></a>rich <span class="ot">&lt;-</span> sim<span class="sc">$</span>summary<span class="sc">$</span><span class="st">`</span><span class="at">richness-final</span><span class="st">`</span></span>
+<span id="cb23-4"><a href="#cb23-4" aria-hidden="true" tabindex="-1"></a>rich[na_mask,<span class="dv">3</span>] <span class="ot">&lt;-</span> <span class="cn">NA</span></span>
+<span id="cb23-5"><a href="#cb23-5" aria-hidden="true" tabindex="-1"></a><span class="fu">plot</span>(<span class="fu">rast</span>(rich, <span class="at">type=</span><span class="st">"xyz"</span>), <span class="at">col=</span><span class="fu">c</span>(<span class="st">"grey"</span>, gen3sis<span class="sc">::</span><span class="fu">color_richness_non_CVDCBP</span>(<span class="fu">max</span>(rich, <span class="at">na.rm=</span>T))), <span class="at">main=</span><span class="st">"Richness"</span>)</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+<div class="cell-output-display">
+<p><img src="gen3sis_workshop_files/figure-html/unnamed-chunk-9-2.png" class="img-fluid" width="672"></p>
+</div>
+<div class="sourceCode cell-code" id="cb24"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb24-1"><a href="#cb24-1" aria-hidden="true" tabindex="-1"></a><span class="co"># plot richness at time step 32 using saved data</span></span>
+<span id="cb24-2"><a href="#cb24-2" aria-hidden="true" tabindex="-1"></a>sps32 <span class="ot">&lt;-</span> <span class="fu">readRDS</span>(<span class="fu">here</span>(<span class="st">"output/config_simple/species/species_t_32.rds"</span>))</span>
+<span id="cb24-3"><a href="#cb24-3" aria-hidden="true" tabindex="-1"></a>lc32 <span class="ot">&lt;-</span> <span class="fu">readRDS</span>(<span class="fu">here</span>(<span class="st">"output/config_simple/landscapes/landscape_t_32.rds"</span>))</span>
+<span id="cb24-4"><a href="#cb24-4" aria-hidden="true" tabindex="-1"></a><span class="fu">plot_richness</span>(sps32, lc32)</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+<div class="cell-output-display">
+<p><img src="gen3sis_workshop_files/figure-html/unnamed-chunk-9-3.png" class="img-fluid" width="672"></p>
+</div>
+</div>
+<p>Beyond the custom storage mediated over the observer function, we have a standard phylogeny stored as phy.nex as well as a copy of the config used for the simulation.</p>
+<div class="cell">
+<div class="sourceCode cell-code" id="cb25"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb25-1"><a href="#cb25-1" aria-hidden="true" tabindex="-1"></a>phy <span class="ot">&lt;-</span> <span class="fu">read.nexus</span>(<span class="fu">file.path</span>(<span class="fu">here</span>(<span class="st">"output/config_simple/phy.nex"</span>)))</span>
+<span id="cb25-2"><a href="#cb25-2" aria-hidden="true" tabindex="-1"></a><span class="fu">plot</span>(phy)</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+<div class="cell-output-display">
+<p><img src="gen3sis_workshop_files/figure-html/unnamed-chunk-10-1.png" class="img-fluid" width="672"></p>
+</div>
+</div>
+<div style="background-color: lightgreen; padding: 1px;">
+<p>🏋💻 <strong>Exercise</strong> [max 2 min] Think of 3 ways to change extinction rates?</p>
+</div>
 </section>
-<section id="troubleshoot." class="level2">
-<h2 class="anchored" data-anchor-id="troubleshoot.">5. Troubleshoot.</h2>
+<section id="customize-simulations" class="level2">
+<h2 class="anchored" data-anchor-id="customize-simulations">4. Customize simulations</h2>
+<p>For an example of a more complex simulation, with species abundances, traits trading off and evolving check the config_M2_TH.R.</p>
+<p>We will modify it so that allopatric speciation is faster.</p>
+<div class="cell">
+<div class="sourceCode cell-code" id="cb26"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb26-1"><a href="#cb26-1" aria-hidden="true" tabindex="-1"></a>conf <span class="ot">&lt;-</span> <span class="fu">create_input_config</span>(<span class="fu">here</span>(<span class="st">"config/config_M2_TH.R"</span>))</span>
+<span id="cb26-2"><a href="#cb26-2" aria-hidden="true" tabindex="-1"></a>conf<span class="sc">$</span>gen3sis<span class="sc">$</span>speciation<span class="sc">$</span>divergence_threshold <span class="ot">=</span> <span class="dv">30</span></span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+</div>
+<p>We will also change the observer function to save the presence/absence matrix for each time step.</p>
+<div class="cell">
+<div class="sourceCode cell-code" id="cb27"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb27-1"><a href="#cb27-1" aria-hidden="true" tabindex="-1"></a>conf<span class="sc">$</span>gen3sis<span class="sc">$</span>general<span class="sc">$</span>end_of_timestep_observer <span class="ot">=</span> <span class="cf">function</span>(data, vars, config){</span>
+<span id="cb27-2"><a href="#cb27-2" aria-hidden="true" tabindex="-1"></a>  <span class="fu">plot_richness</span>(data<span class="sc">$</span>all_species, data<span class="sc">$</span>landscape)</span>
+<span id="cb27-3"><a href="#cb27-3" aria-hidden="true" tabindex="-1"></a>  <span class="co"># make p/a matrices</span></span>
+<span id="cb27-4"><a href="#cb27-4" aria-hidden="true" tabindex="-1"></a>  out_dir <span class="ot">&lt;-</span> config<span class="sc">$</span>directories<span class="sc">$</span>output</span>
+<span id="cb27-5"><a href="#cb27-5" aria-hidden="true" tabindex="-1"></a>  <span class="cf">if</span>(<span class="sc">!</span><span class="fu">file.exists</span>(<span class="fu">file.path</span>(out_dir,<span class="st">"occs"</span>))){</span>
+<span id="cb27-6"><a href="#cb27-6" aria-hidden="true" tabindex="-1"></a>    <span class="fu">dir.create</span>(<span class="fu">file.path</span>(out_dir, <span class="st">"occs"</span>))</span>
+<span id="cb27-7"><a href="#cb27-7" aria-hidden="true" tabindex="-1"></a>    }</span>
+<span id="cb27-8"><a href="#cb27-8" aria-hidden="true" tabindex="-1"></a>  <span class="co"># cell names</span></span>
+<span id="cb27-9"><a href="#cb27-9" aria-hidden="true" tabindex="-1"></a>  all_cells <span class="ot">&lt;-</span> <span class="fu">rownames</span>(data<span class="sc">$</span>landscape<span class="sc">$</span>coordinates)</span>
+<span id="cb27-10"><a href="#cb27-10" aria-hidden="true" tabindex="-1"></a>  <span class="co"># get 0 for absence and 1 for presence in each grid cell</span></span>
+<span id="cb27-11"><a href="#cb27-11" aria-hidden="true" tabindex="-1"></a>  asp <span class="ot">&lt;-</span> <span class="fu">do.call</span>(cbind,</span>
+<span id="cb27-12"><a href="#cb27-12" aria-hidden="true" tabindex="-1"></a>                 <span class="fu">lapply</span>(data<span class="sc">$</span>all_species, <span class="at">FUN =</span> <span class="cf">function</span>(x) {</span>
+<span id="cb27-13"><a href="#cb27-13" aria-hidden="true" tabindex="-1"></a>                   <span class="fu">ifelse</span>(all_cells <span class="sc">%in%</span> <span class="fu">names</span>(x<span class="sc">$</span>abundance), <span class="dv">1</span>, <span class="dv">0</span>)</span>
+<span id="cb27-14"><a href="#cb27-14" aria-hidden="true" tabindex="-1"></a>                  }))</span>
+<span id="cb27-15"><a href="#cb27-15" aria-hidden="true" tabindex="-1"></a>  <span class="co"># colnames are species names</span></span>
+<span id="cb27-16"><a href="#cb27-16" aria-hidden="true" tabindex="-1"></a>  <span class="fu">colnames</span>(asp ) <span class="ot">&lt;-</span> <span class="fu">unlist</span>(<span class="fu">lapply</span>(data<span class="sc">$</span>all_species, <span class="cf">function</span>(x){x<span class="sc">$</span>id}))</span>
+<span id="cb27-17"><a href="#cb27-17" aria-hidden="true" tabindex="-1"></a>  <span class="co"># column bind with x/y coordinates</span></span>
+<span id="cb27-18"><a href="#cb27-18" aria-hidden="true" tabindex="-1"></a>  presence_absence_matrix <span class="ot">&lt;-</span> <span class="fu">cbind</span>(data<span class="sc">$</span>landscape<span class="sc">$</span>coordinates, asp)</span>
+<span id="cb27-19"><a href="#cb27-19" aria-hidden="true" tabindex="-1"></a>  <span class="fu">saveRDS</span>(presence_absence_matrix, </span>
+<span id="cb27-20"><a href="#cb27-20" aria-hidden="true" tabindex="-1"></a>          <span class="at">file=</span><span class="fu">file.path</span>(out_dir,<span class="st">"occs"</span>, <span class="fu">paste0</span>(<span class="st">"pa_t_"</span>,vars<span class="sc">$</span>ti, <span class="st">".rds"</span>)))</span>
+<span id="cb27-21"><a href="#cb27-21" aria-hidden="true" tabindex="-1"></a>}</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+</div>
+<div class="cell">
+<div class="sourceCode cell-code" id="cb28"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb28-1"><a href="#cb28-1" aria-hidden="true" tabindex="-1"></a>simod <span class="ot">&lt;-</span> <span class="fu">run_simulation</span>(<span class="at">config=</span>conf, </span>
+<span id="cb28-2"><a href="#cb28-2" aria-hidden="true" tabindex="-1"></a>                      <span class="at">landscape=</span><span class="fu">here</span>(<span class="st">"space"</span>), </span>
+<span id="cb28-3"><a href="#cb28-3" aria-hidden="true" tabindex="-1"></a>                      <span class="at">output_directory=</span><span class="fu">tempdir</span>())</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+</div>
+<p>The dynamics is different from the simple simulation, with more species and a some extinction events.</p>
+<div class="cell">
+<div class="cell-output-display">
+<p><img src="gen3sis_workshop_files/figure-html/unnamed-chunk-14-1.png" class="img-fluid" width="672"></p>
+</div>
+<div class="cell-output-display">
+<p><img src="gen3sis_workshop_files/figure-html/unnamed-chunk-14-2.png" class="img-fluid" width="672"></p>
+</div>
+</div>
+<div style="background-color: lightgreen; padding: 1px;">
+<p>🏋💻 <strong>Exercise</strong> [15 min] Review the config_M2_TH.R file and try to understand what it’s doing. Consider how you might modify the configuration or apply it to a specific research question.</p>
+</div>
+</section>
+<section id="troubleshoot" class="level2">
+<h2 class="anchored" data-anchor-id="troubleshoot">5. Troubleshoot</h2>
+<p>Creating or modifying a gen3sis configuration can definitely lead to some weird errors, especially since it’s so flexible. That’s the downside, along with the steep learning curve. But if you’re not too overwhelmed, you’re doing great!</p>
+<p>Here are some handy debugging tips for when you run into those pesky errors:</p>
+<p>browser(): This function lets you pause the execution and explore what’s going on. It’s like a pit stop where you can check out variables and step through the code. Hint: you can also condition browser calls.</p>
+<p>To make your R session enter browser mode whenever you hit an error, you can use: <em>options(error = recover)</em>. This will help you diagnose and fix issues more easily.</p>
+<p><img src="https://64.media.tumblr.com/f5436f265630043b4163b3b796436229/tumblr_nerv5zwzCr1sgl0ajo1_500.gif" class="img-fluid"></p>
 </section>
 
 </main>

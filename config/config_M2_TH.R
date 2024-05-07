@@ -3,7 +3,7 @@
 ########################
 
 random_seed =51801
-start_time = NA
+start_time = 250
 end_time = NA
 max_number_of_species =20000
 max_number_of_coexisting_species =20000
@@ -64,33 +64,7 @@ environmental_ranges = list("mean_temp"=c(9,26), "min_temp"=c(9,26),  "max_temp"
 #########################
 
 end_of_timestep_observer = function(data, vars, config){
-  # jpeg(paste0(config$directories$output_plots, "/ranges_t", vars$ti, ".jpeg"))
-  # {
-  #   par(mfrow=c(1,1))
-  #   plot_ranges(data$all_species[c(1:3)], data$landscape)
-  # }
-  # dev.off()
-  #  plot_richness(data$all_species, data$landscape)
-  # save_species()
-  save_abundance()
-  # save_divergence()
-  # save_occupancy()
-  # save_phylogeny()
-  save_traits()
-  
-  # make p/a matrices if necessary
-  if(!file.exists(file.path(config$directories$output, "occs"))){dir.create(file.path(config$directories$output, "occs"))}
-  # cell names
-  all_cells <- rownames(data$landscape$coordinates)
-  # get 0 for absence and 1 for presence in each grid cell
-  all_species_presence <- do.call( cbind, lapply(data$all_species, FUN = function(x) {ifelse(all_cells %in% names(x$abundance), 1, 0)}))
-  # colnames are species names
-  colnames(all_species_presence ) <- unlist(lapply(data$all_species, function(x){x$id}))
-  # column bind with x/y coordinates
-  presence_absence_matrix <- cbind(data$landscape$coordinates, all_species_presence)
-  saveRDS(presence_absence_matrix, file=file.path(config$directories$output,"occs",  paste0("pa_t_",vars$ti, ".rds")))
-  # if(!file.exists(file.path(config$directories$output, "mean_traits_sp"))){dir.create(file.path(config$directories$output, "mean_traits_sp"))}
-  # saveRDS(data$eco_by_sp, file=file.path(config$directories$output,"mean_traits_sp",  paste0("mean_trs_t_",vars$ti, ".rds")))
+  plot_richness(data$all_species, data$landscape)
 }
 
 
@@ -106,10 +80,10 @@ create_ancestor_species <- function(landscape, config) {
     # initial_cells <- sample(initial_cells, 1)
     new_species[[i]] <- create_species(initial_cells, config)
     #set local adaptation to max optimal temp equals local temp
-    new_species[[i]]$traits[ , "dispersal"] <-0.897959183673469
-    new_species[[i]]$traits[ , "competition"] <-0.910204081632653
+    new_species[[i]]$traits[ , "dispersal"] <-0.65
+    new_species[[i]]$traits[ , "competition"] <-0.2
     new_species[[i]]$traits[ , "mean_temp"] <- landscape$environment[initial_cells,"mean_temp"]
-    new_species[[i]]$traits[ , "temp_width"] <- 0.4
+    new_species[[i]]$traits[ , "temp_width"] <- 0.2
     plot_species_presence(landscape, species=new_species[[i]])
   }
   return(new_species)
@@ -171,17 +145,6 @@ apply_evolution <- function(species, cluster_indices, landscape, config) {
       tr_hom <- mean_trait-traits_ti
       traits[sites_cluster, ti] <- traits_ti+(tr_hom*pw_tr_hom)
       # hist(traits[sites_cluster, ti], main="after")
-    }
-  }
-  
-  # Homogenize all traits by weighted abundance, exclude here any trait that should be more neutral
-  trn <- config$gen3sis$general$trait_names
-  for(cluster_index in unique(cluster_indices)){
-    cells_cluster <- cells[which(cluster_indices == cluster_index)]
-    mean_abd <- mean(species$abundance[cells_cluster])
-    weight_abd <- species$abundance[cells_cluster]/mean_abd
-    for (ti in trn){
-      traits[cells_cluster, ti] <- mean(traits[cells_cluster, ti]*weight_abd)
     }
   }
   
