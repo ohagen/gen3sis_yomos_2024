@@ -1,5 +1,7 @@
-/output/
-!/output/config_simple/phy.nex
-!/output/config_simple/sgen3sis.rds
-/space/distances_full/
+output/**/
+!output/config_simple
+output/config_simple/*
+!output/config_simple/phy.nex
+!output/config_simple/sgen3sis.rds
+space/distances_full
 *.Rproj
