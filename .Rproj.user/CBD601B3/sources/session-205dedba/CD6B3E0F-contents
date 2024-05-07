@@ -27,6 +27,7 @@ trait_names = c("dispersal", "mean_temp", "temp_width")
 
 end_of_timestep_observer = function(data, vars, config){
   plot_richness(data$all_species, data$landscape)
+  save_species() # saves a species and landscape objects for desired timesteps
 }
 
 

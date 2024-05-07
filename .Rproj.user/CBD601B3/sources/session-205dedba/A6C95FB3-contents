@@ -42,6 +42,8 @@ print(paste("gen3sis version:", packageVersion("gen3sis")))
 require(terra)
 # package here for simple directory configuration
 require(here)
+# package ape for phylogenetic analysis
+require(ape)
 ```
 
 Download landscape and configuration files
@@ -188,20 +190,44 @@ Think of 3 ways to change extinction rates?
 
 It's time to run a simulation, we use the config_simple and archipelago system we are familiar with and set verbose to 2 in order to get more information on the progress of the simulation.
 
-```{r}
+```{r, eval=FALSE}
 # run simulation
 sim <- run_simulation(config = here("config/config_simple.R"), 
                       landscape = here("space"), 
                       output_directory = here("output"))
 ```
 
-On sim we store the simulation output summary, while most of the information and large data is/should be stored in the output directory.
+On sim we store the simulation output summary, while most of the information and large data is/should be stored in the output directory. If you don't want to run the simulation, you can load the sim object from the repo.
 
 ```{r}
+sim <- readRDS(here("output/config_simple/sgen3sis.rds"))
+```
+
+
+In addition to the simulation output summary, we include a flag indicating whether the simulation completed successfully or the criteria for stopping, such as an excessive number of species. This section also provides system information and simulation-specific parameters.
+
+```{r}
+#check elements inside the sim object
 names(sim)
 
 # visualize the outputs
 plot_summary(sim)
+
+# plot richness from summary in custom fashion
+na_mask <- is.na(lc$elevation[,"0"])
+rich <- sim$summary$`richness-final`
+rich[na_mask,3] <- NA
+plot(rast(rich, type="xyz"), col=c("grey", gen3sis::color_richness_non_CVDCBP(max(rich, na.rm=T))), main="Richness")
+
+
+# plot richness at x time step using saved data
+```
+
+Beyond the custom storage mediated over the observer function, we have a standard phylogeny stored as phy.nex as well as a copy of the config used for the simulation.
+
+```{r}
+phy <- read.nexus(file.path(here("output/config_simple/phy.nex")))
+plot(phy)
 ```
 
 ## 4. Customize simulations.

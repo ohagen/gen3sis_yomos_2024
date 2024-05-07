@@ -3,5 +3,11 @@ output/**/
 output/config_simple/*
 !output/config_simple/phy.nex
 !output/config_simple/sgen3sis.rds
+!output/config_simple/species
+output/config_simple/species/*
+!output/config_simple/species/species_t_32.rds
+!output/config_simple/landscapes
+output/config_simple/landscapes/*
+!output/config_simple/landscapes/landscape_t_32.rds
 space/distances_full
-*.Rproj
+.Rproj.user
