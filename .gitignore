@@ -1,0 +1,5 @@
+/output/
+!/output/**/phy.nex
+!/output/**/sgen3sis.rds
+/space/distances_full/
+*.Rproj

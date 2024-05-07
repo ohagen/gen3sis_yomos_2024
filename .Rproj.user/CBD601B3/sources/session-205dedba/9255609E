@@ -1,0 +1,28 @@
+{
+    "id": "9255609E",
+    "path": "~/iDiv/code/teaching/gen3sis_yomos_2024/config/config_M0_TH.R",
+    "project_path": "config/config_M0_TH.R",
+    "type": "r_source",
+    "hash": "2911000319",
+    "contents": "",
+    "dirty": false,
+    "created": 1715019471928.0,
+    "source_on_save": false,
+    "relative_order": 4,
+    "properties": {
+        "source_window_id": "",
+        "Source": "Source",
+        "docOutlineVisible": "1",
+        "cursorPosition": "126,0",
+        "scrollLine": "119",
+        "docOutlineSize": "166"
+    },
+    "folds": "",
+    "lastKnownWriteTime": 1715019762,
+    "encoding": "UTF-8",
+    "collab_server": "",
+    "source_window": "",
+    "last_content_update": 1715019762805,
+    "read_only": false,
+    "read_only_alternatives": []
+}

@@ -1,0 +1,540 @@
+<!DOCTYPE html>
+<html xmlns="http://www.w3.org/1999/xhtml" lang="en" xml:lang="en"><head>
+
+<meta charset="utf-8">
+<meta name="generator" content="quarto-1.3.450">
+
+<meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=yes">
+
+
+<title>Workshop gen3sis</title>
+<style>
+code{white-space: pre-wrap;}
+span.smallcaps{font-variant: small-caps;}
+div.columns{display: flex; gap: min(4vw, 1.5em);}
+div.column{flex: auto; overflow-x: auto;}
+div.hanging-indent{margin-left: 1.5em; text-indent: -1.5em;}
+ul.task-list{list-style: none;}
+ul.task-list li input[type="checkbox"] {
+  width: 0.8em;
+  margin: 0 0.8em 0.2em -1em; /* quarto-specific, see https://github.com/quarto-dev/quarto-cli/issues/4556 */ 
+  vertical-align: middle;
+}
+/* CSS for syntax highlighting */
+pre > code.sourceCode { white-space: pre; position: relative; }
+pre > code.sourceCode > span { display: inline-block; line-height: 1.25; }
+pre > code.sourceCode > span:empty { height: 1.2em; }
+.sourceCode { overflow: visible; }
+code.sourceCode > span { color: inherit; text-decoration: inherit; }
+div.sourceCode { margin: 1em 0; }
+pre.sourceCode { margin: 0; }
+@media screen {
+div.sourceCode { overflow: auto; }
+}
+@media print {
+pre > code.sourceCode { white-space: pre-wrap; }
+pre > code.sourceCode > span { text-indent: -5em; padding-left: 5em; }
+}
+pre.numberSource code
+  { counter-reset: source-line 0; }
+pre.numberSource code > span
+  { position: relative; left: -4em; counter-increment: source-line; }
+pre.numberSource code > span > a:first-child::before
+  { content: counter(source-line);
+    position: relative; left: -1em; text-align: right; vertical-align: baseline;
+    border: none; display: inline-block;
+    -webkit-touch-callout: none; -webkit-user-select: none;
+    -khtml-user-select: none; -moz-user-select: none;
+    -ms-user-select: none; user-select: none;
+    padding: 0 4px; width: 4em;
+  }
+pre.numberSource { margin-left: 3em;  padding-left: 4px; }
+div.sourceCode
+  {   }
+@media screen {
+pre > code.sourceCode > span > a:first-child::before { text-decoration: underline; }
+}
+</style>
+
+
+<script src="gen3sis_workshop_files/libs/clipboard/clipboard.min.js"></script>
+<script src="gen3sis_workshop_files/libs/quarto-html/quarto.js"></script>
+<script src="gen3sis_workshop_files/libs/quarto-html/popper.min.js"></script>
+<script src="gen3sis_workshop_files/libs/quarto-html/tippy.umd.min.js"></script>
+<script src="gen3sis_workshop_files/libs/quarto-html/anchor.min.js"></script>
+<link href="gen3sis_workshop_files/libs/quarto-html/tippy.css" rel="stylesheet">
+<link href="gen3sis_workshop_files/libs/quarto-html/quarto-syntax-highlighting.css" rel="stylesheet" id="quarto-text-highlighting-styles">
+<script src="gen3sis_workshop_files/libs/bootstrap/bootstrap.min.js"></script>
+<link href="gen3sis_workshop_files/libs/bootstrap/bootstrap-icons.css" rel="stylesheet">
+<link href="gen3sis_workshop_files/libs/bootstrap/bootstrap.min.css" rel="stylesheet" id="quarto-bootstrap" data-mode="light">
+
+
+</head>
+
+<body>
+
+<div id="quarto-content" class="page-columns page-rows-contents page-layout-article">
+<div id="quarto-margin-sidebar" class="sidebar margin-sidebar">
+  <nav id="TOC" role="doc-toc" class="toc-active">
+    <h2 id="toc-title">Table of contents</h2>
+   
+  <ul class="collapse">
+  <li><a href="#preamble" id="toc-preamble" class="nav-link active" data-scroll-target="#preamble">Preamble</a></li>
+  <li><a href="#introduction" id="toc-introduction" class="nav-link" data-scroll-target="#introduction">Introduction</a></li>
+  <li><a href="#setting-up-the-r-environment" id="toc-setting-up-the-r-environment" class="nav-link" data-scroll-target="#setting-up-the-r-environment">1. Setting up the R environment</a></li>
+  <li><a href="#understanding-the-basics-of-gen3sis." id="toc-understanding-the-basics-of-gen3sis." class="nav-link" data-scroll-target="#understanding-the-basics-of-gen3sis.">2. Understanding the basics of <code>gen3sis</code>.</a></li>
+  <li><a href="#run-a-basic-simulation." id="toc-run-a-basic-simulation." class="nav-link" data-scroll-target="#run-a-basic-simulation.">3. Run a basic simulation.</a></li>
+  <li><a href="#customize-simulations." id="toc-customize-simulations." class="nav-link" data-scroll-target="#customize-simulations.">4. Customize simulations.</a></li>
+  <li><a href="#troubleshoot." id="toc-troubleshoot." class="nav-link" data-scroll-target="#troubleshoot.">5. Troubleshoot.</a></li>
+  </ul>
+</nav>
+</div>
+<main class="content" id="quarto-document-content">
+
+<header id="title-block-header" class="quarto-title-block default">
+<div class="quarto-title">
+<h1 class="title">Workshop gen3sis</h1>
+<p class="subtitle lead">Building and running custom mechanistic eco-evolutionary biodiversity models</p>
+</div>
+
+
+
+<div class="quarto-title-meta">
+
+    <div>
+    <div class="quarto-title-meta-heading">Authors</div>
+    <div class="quarto-title-meta-contents">
+             <p>Oskar Hagen (oskar@hagen.bio) </p>
+             <p>Juliana Ciccheto </p>
+          </div>
+  </div>
+    
+  
+    
+  </div>
+  
+
+</header>
+
+<div class="quarto-figure quarto-figure-center">
+<figure class="figure">
+<p><img src="https://static.wixstatic.com/media/c2b417_0e2b0aceec0f49dfb07ae5b40a912e56~mv2.png/v1/crop/x_0,y_0,w_1100,h_431,q_90,enc_auto/YoMos-Logo-Querformat_websitebackgorund_.png" title="Yomos" class="img-fluid figure-img"></p>
+<figcaption class="figure-caption">16.05.2024, Federseestation in Bad Buchau, Germany</figcaption>
+</figure>
+</div>
+<section id="preamble" class="level2">
+<h2 class="anchored" data-anchor-id="preamble">Preamble</h2>
+<p>This workshop aims to: disseminate knowledge on utilizing gen3sis for various research inquiries, and provide practical experience in the mechanistic modeling cycle. The course will briefly introduce the philosophical context of natural science and the principles of mechanistic models. Participants will engage in hands-on exercises, applying gen3sis to explore hypotheses concerning the genesis and maintenance of biodiversity within the R programming environment, with opportunities to design their own research questions. The workshop primarily employs simulated data, culminating in insights on connecting processes and patterns within biodiversity research. To prepare, bring a laptop with R and the latest version of gen3sis. If you want to come even more prepared and make the most of the course, I recommend reading the <a href="https://doi.org/10.1371/journal.pbio.3001340">methods paper</a> and having a look at this <a href="https://github.com/ohagen/DispDiv3">repo</a>, containing some of the materials (i.e.&nbsp;landscapes and configuration files) used here.</p>
+</section>
+<section id="introduction" class="level2">
+<h2 class="anchored" data-anchor-id="introduction">Introduction</h2>
+<p>Welcome to this workshop on <code>gen3sis</code>, an R package designed for simulating ecological e evolutionary dynamics over time and space. In this two-hour workshop, we will:</p>
+<ol type="1">
+<li>Set up the R environment.<br>
+</li>
+<li>Understand the basics of <code>gen3sis</code>.</li>
+<li>Run a basic simulation.</li>
+<li>Customize simulations.</li>
+<li>Troubleshoot.</li>
+</ol>
+</section>
+<section id="setting-up-the-r-environment" class="level2">
+<h2 class="anchored" data-anchor-id="setting-up-the-r-environment">1. Setting up the R environment</h2>
+<p>We’ll need the <code>gen3sis</code> R-package along with configuration and landscapes from this <a href="https://github.com/ohagen/DispDiv3">repo</a>. Please download the repo and create a new R script in the same directory. There you can copy and paste the code from the sections bellow.</p>
+<div class="cell">
+<div class="sourceCode cell-code" id="cb1"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb1-1"><a href="#cb1-1" aria-hidden="true" tabindex="-1"></a><span class="co"># install and load gen3sis</span></span>
+<span id="cb1-2"><a href="#cb1-2" aria-hidden="true" tabindex="-1"></a><span class="fu">require</span>(gen3sis)</span>
+<span id="cb1-3"><a href="#cb1-3" aria-hidden="true" tabindex="-1"></a><span class="co"># get package version</span></span>
+<span id="cb1-4"><a href="#cb1-4" aria-hidden="true" tabindex="-1"></a><span class="fu">print</span>(<span class="fu">paste</span>(<span class="st">"gen3sis version:"</span>, <span class="fu">packageVersion</span>(<span class="st">"gen3sis"</span>)))</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+<div class="cell-output cell-output-stdout">
+<pre><code>[1] "gen3sis version: 1.5.11"</code></pre>
+</div>
+<div class="sourceCode cell-code" id="cb3"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb3-1"><a href="#cb3-1" aria-hidden="true" tabindex="-1"></a><span class="co"># we will also use terra for landscape visualization</span></span>
+<span id="cb3-2"><a href="#cb3-2" aria-hidden="true" tabindex="-1"></a><span class="fu">require</span>(terra)</span>
+<span id="cb3-3"><a href="#cb3-3" aria-hidden="true" tabindex="-1"></a><span class="co"># package here for simple directory configuration</span></span>
+<span id="cb3-4"><a href="#cb3-4" aria-hidden="true" tabindex="-1"></a><span class="fu">require</span>(here)</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+</div>
+<p>Download landscape and configuration files</p>
+<div class="cell">
+<div class="sourceCode cell-code" id="cb4"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb4-1"><a href="#cb4-1" aria-hidden="true" tabindex="-1"></a><span class="co"># get home dir</span></span>
+<span id="cb4-2"><a href="#cb4-2" aria-hidden="true" tabindex="-1"></a>here<span class="sc">::</span><span class="fu">i_am</span>(<span class="st">"gen3sis_workshop.qmd"</span>)</span>
+<span id="cb4-3"><a href="#cb4-3" aria-hidden="true" tabindex="-1"></a><span class="co"># set path to directory containing the landscape</span></span>
+<span id="cb4-4"><a href="#cb4-4" aria-hidden="true" tabindex="-1"></a>landscape_dir <span class="ot">&lt;-</span> <span class="fu">here</span>(<span class="st">"space"</span>)</span>
+<span id="cb4-5"><a href="#cb4-5" aria-hidden="true" tabindex="-1"></a><span class="co"># look at folder structure</span></span>
+<span id="cb4-6"><a href="#cb4-6" aria-hidden="true" tabindex="-1"></a><span class="fu">list.files</span>(landscape_dir)</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+<div class="cell-output cell-output-stdout">
+<pre><code>[1] "distances_local" "landscapes.rds" </code></pre>
+</div>
+<div class="sourceCode cell-code" id="cb6"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb6-1"><a href="#cb6-1" aria-hidden="true" tabindex="-1"></a><span class="co"># set path to config_file</span></span>
+<span id="cb6-2"><a href="#cb6-2" aria-hidden="true" tabindex="-1"></a>config_file <span class="ot">&lt;-</span> <span class="fu">here</span>(<span class="st">"config/config_simple.R"</span>)</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+</div>
+</section>
+<section id="understanding-the-basics-of-gen3sis." class="level2">
+<h2 class="anchored" data-anchor-id="understanding-the-basics-of-gen3sis.">2. Understanding the basics of <code>gen3sis</code>.</h2>
+<p>Gen3sis is an engine that simulates eco-evolutionary processes at the population level. It utilizes a landscape containing environmental variables that evolve over time, alongside a configuration file housing the eco-evolutionary rules.</p>
+<section id="landscape" class="level3">
+<h3 class="anchored" data-anchor-id="landscape">2.1 Landscape</h3>
+<div class="quarto-figure quarto-figure-center">
+<figure class="figure">
+<p><img src="https://github.com/ohagen/DispDiv3/raw/main/figures/AnimationS1_patch_dynamics.gif" class="img-fluid figure-img"></p>
+<figcaption class="figure-caption">This tutorial utilizes a theoretical archipelago system. Each site 1x1 km, features temperature (i.e.&nbsp;mean, minimum and maximum temperature) and has a landscape structure that is generated by approximating topography, uplift dynamics, and lapse rate. Additionally, it incorporates global temperature and sea level changes dating back to the past 5 million years (Ma).</figcaption>
+</figure>
+</div>
+<div class="cell">
+<div class="sourceCode cell-code" id="cb7"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb7-1"><a href="#cb7-1" aria-hidden="true" tabindex="-1"></a><span class="co"># load landscapes</span></span>
+<span id="cb7-2"><a href="#cb7-2" aria-hidden="true" tabindex="-1"></a>lc <span class="ot">&lt;-</span> <span class="fu">readRDS</span>(<span class="fu">file.path</span>(landscape_dir,<span class="st">"landscapes.rds"</span>))</span>
+<span id="cb7-3"><a href="#cb7-3" aria-hidden="true" tabindex="-1"></a><span class="co"># class(lc) "list"</span></span>
+<span id="cb7-4"><a href="#cb7-4" aria-hidden="true" tabindex="-1"></a><span class="co"># get names of landscape variables</span></span>
+<span id="cb7-5"><a href="#cb7-5" aria-hidden="true" tabindex="-1"></a><span class="fu">names</span>(lc)</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+<div class="cell-output cell-output-stdout">
+<pre><code>[1] "elevation" "mean_temp" "min_temp"  "max_temp"  "patch"    </code></pre>
+</div>
+<div class="sourceCode cell-code" id="cb9"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb9-1"><a href="#cb9-1" aria-hidden="true" tabindex="-1"></a><span class="co"># get first time step</span></span>
+<span id="cb9-2"><a href="#cb9-2" aria-hidden="true" tabindex="-1"></a>first_step_pos <span class="ot">&lt;-</span> <span class="fu">ncol</span>(lc<span class="sc">$</span>mean_temp)</span>
+<span id="cb9-3"><a href="#cb9-3" aria-hidden="true" tabindex="-1"></a>first_step <span class="ot">&lt;-</span> <span class="fu">colnames</span>(lc<span class="sc">$</span>mean_temp)[first_step_pos]</span>
+<span id="cb9-4"><a href="#cb9-4" aria-hidden="true" tabindex="-1"></a><span class="co"># get first 10 sites of mean temperature for the 2 last time steps and the first (oldest) time step</span></span>
+<span id="cb9-5"><a href="#cb9-5" aria-hidden="true" tabindex="-1"></a>lc<span class="sc">$</span>mean_temp[<span class="dv">100</span><span class="sc">:</span><span class="dv">110</span>, <span class="fu">c</span>(<span class="dv">1</span><span class="sc">:</span><span class="dv">4</span>, first_step_pos)]</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+<div class="cell-output cell-output-stdout">
+<pre><code>       x    y        0        1      500
+100 39.5 58.5       NA       NA       NA
+101 40.5 58.5       NA       NA       NA
+102 41.5 58.5       NA       NA       NA
+103 42.5 58.5       NA       NA       NA
+104 43.5 58.5       NA       NA       NA
+105 44.5 58.5       NA       NA       NA
+106 45.5 58.5       NA       NA       NA
+107 46.5 58.5       NA       NA       NA
+108 47.5 58.5       NA 23.82152       NA
+109 48.5 58.5       NA 23.56207       NA
+110 49.5 58.5 24.89379 23.39746 24.85717</code></pre>
+</div>
+<div class="sourceCode cell-code" id="cb11"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb11-1"><a href="#cb11-1" aria-hidden="true" tabindex="-1"></a><span class="co"># plot mean_temp for first and last time step</span></span>
+<span id="cb11-2"><a href="#cb11-2" aria-hidden="true" tabindex="-1"></a><span class="fu">par</span>(<span class="at">mfrow=</span><span class="fu">c</span>(<span class="dv">1</span>,<span class="dv">2</span>))</span>
+<span id="cb11-3"><a href="#cb11-3" aria-hidden="true" tabindex="-1"></a><span class="fu">plot</span>(r_first <span class="ot">&lt;-</span> <span class="fu">rast</span>(lc<span class="sc">$</span>mean_temp[ ,<span class="fu">c</span>(<span class="st">"x"</span>, <span class="st">"y"</span>, first_step)], <span class="at">type=</span><span class="st">"xyz"</span>), <span class="at">main=</span><span class="st">"first"</span>)</span>
+<span id="cb11-4"><a href="#cb11-4" aria-hidden="true" tabindex="-1"></a><span class="fu">plot</span>(r_last <span class="ot">&lt;-</span> <span class="fu">rast</span>(lc<span class="sc">$</span>mean_temp[ ,<span class="fu">c</span>(<span class="st">"x"</span>, <span class="st">"y"</span>, <span class="st">"0"</span>)], <span class="at">type=</span><span class="st">"xyz"</span>), <span class="at">main=</span><span class="st">"last"</span>)</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+<div class="cell-output-display">
+<p><img src="gen3sis_workshop_files/figure-html/unnamed-chunk-3-1.png" class="img-fluid" width="672"></p>
+</div>
+</div>
+<div style="background-color: lightgreen; padding: 1px;">
+<p>🏋💻 <strong>Exercise</strong> [max 10 min] Create a way to visualize the last 100 time steps of this gen3sis input. If possible think of abstracting for any x,y,z1,z2,z3… temporal data-frame. If possible, try to make a function.</p>
+<details>
+<div class="cell">
+<div class="sourceCode cell-code" id="cb12"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb12-1"><a href="#cb12-1" aria-hidden="true" tabindex="-1"></a><span class="co"># solution 1</span></span>
+<span id="cb12-2"><a href="#cb12-2" aria-hidden="true" tabindex="-1"></a><span class="cf">for</span> (ti <span class="cf">in</span> <span class="dv">100</span><span class="sc">:</span><span class="dv">0</span>) {</span>
+<span id="cb12-3"><a href="#cb12-3" aria-hidden="true" tabindex="-1"></a>  ri <span class="ot">&lt;-</span> <span class="fu">rast</span>(lc<span class="sc">$</span>elevation[,<span class="fu">c</span>(<span class="st">"x"</span>, <span class="st">"y"</span>, <span class="fu">as.character</span>(ti))], <span class="at">type=</span><span class="st">"xyz"</span>)</span>
+<span id="cb12-4"><a href="#cb12-4" aria-hidden="true" tabindex="-1"></a>  <span class="fu">plot</span>(ri, <span class="at">main=</span><span class="fu">paste</span>(ti<span class="sc">/</span><span class="dv">100</span>, <span class="st">"Ma"</span>)) <span class="co"># divide by 100 to get Ma since 1 time-step =10 kyr</span></span>
+<span id="cb12-5"><a href="#cb12-5" aria-hidden="true" tabindex="-1"></a>  <span class="fu">Sys.sleep</span>(<span class="fl">0.1</span>)</span>
+<span id="cb12-6"><a href="#cb12-6" aria-hidden="true" tabindex="-1"></a>}</span>
+<span id="cb12-7"><a href="#cb12-7" aria-hidden="true" tabindex="-1"></a><span class="co"># solution 2</span></span>
+<span id="cb12-8"><a href="#cb12-8" aria-hidden="true" tabindex="-1"></a><span class="co"># define animation function</span></span>
+<span id="cb12-9"><a href="#cb12-9" aria-hidden="true" tabindex="-1"></a>plot_landenv <span class="ot">&lt;-</span>  <span class="cf">function</span>(df, <span class="at">times=</span><span class="dv">100</span><span class="sc">:</span><span class="dv">0</span>, <span class="at">reverse=</span>F, <span class="at">speed=</span><span class="fl">0.1</span>){</span>
+<span id="cb12-10"><a href="#cb12-10" aria-hidden="true" tabindex="-1"></a>  <span class="co"># df is a data frame with x, y coordinates and time steps as columns with environmental variables</span></span>
+<span id="cb12-11"><a href="#cb12-11" aria-hidden="true" tabindex="-1"></a>  <span class="co"># reverse is a boolean. Reverse the order of time steps?</span></span>
+<span id="cb12-12"><a href="#cb12-12" aria-hidden="true" tabindex="-1"></a>  <span class="co"># times is either a vector of time steps or a character "all"</span></span>
+<span id="cb12-13"><a href="#cb12-13" aria-hidden="true" tabindex="-1"></a>  <span class="co"># speed in seconds</span></span>
+<span id="cb12-14"><a href="#cb12-14" aria-hidden="true" tabindex="-1"></a>  <span class="co">#df &lt;- lc$temp</span></span>
+<span id="cb12-15"><a href="#cb12-15" aria-hidden="true" tabindex="-1"></a>  <span class="cf">if</span> (times[<span class="dv">1</span>]<span class="sc">==</span><span class="st">"all"</span>){</span>
+<span id="cb12-16"><a href="#cb12-16" aria-hidden="true" tabindex="-1"></a>   times <span class="ot">&lt;-</span> <span class="fu">names</span>(df)[<span class="sc">!</span><span class="fu">names</span>(df)<span class="sc">%in%</span><span class="fu">c</span>(<span class="st">"x"</span>, <span class="st">"y"</span>)] </span>
+<span id="cb12-17"><a href="#cb12-17" aria-hidden="true" tabindex="-1"></a>  }</span>
+<span id="cb12-18"><a href="#cb12-18" aria-hidden="true" tabindex="-1"></a>  <span class="cf">if</span> (reverse){</span>
+<span id="cb12-19"><a href="#cb12-19" aria-hidden="true" tabindex="-1"></a>    times <span class="ot">&lt;-</span> <span class="fu">rev</span>(times)</span>
+<span id="cb12-20"><a href="#cb12-20" aria-hidden="true" tabindex="-1"></a>  }</span>
+<span id="cb12-21"><a href="#cb12-21" aria-hidden="true" tabindex="-1"></a>  <span class="cf">for</span> (ti <span class="cf">in</span> times){</span>
+<span id="cb12-22"><a href="#cb12-22" aria-hidden="true" tabindex="-1"></a>    ri <span class="ot">&lt;-</span> <span class="fu">rast</span>(df[,<span class="fu">c</span>(<span class="st">"x"</span>, <span class="st">"y"</span>, ti)], <span class="at">type=</span><span class="st">"xyz"</span>)</span>
+<span id="cb12-23"><a href="#cb12-23" aria-hidden="true" tabindex="-1"></a>    <span class="fu">plot</span>(ri, <span class="at">main=</span><span class="fu">paste</span>(<span class="fu">as.numeric</span>(ti)<span class="sc">/</span><span class="dv">100</span>, <span class="st">"Ma"</span>))</span>
+<span id="cb12-24"><a href="#cb12-24" aria-hidden="true" tabindex="-1"></a>    <span class="fu">Sys.sleep</span>(speed)</span>
+<span id="cb12-25"><a href="#cb12-25" aria-hidden="true" tabindex="-1"></a>  }</span>
+<span id="cb12-26"><a href="#cb12-26" aria-hidden="true" tabindex="-1"></a>}</span>
+<span id="cb12-27"><a href="#cb12-27" aria-hidden="true" tabindex="-1"></a><span class="co"># call animation function</span></span>
+<span id="cb12-28"><a href="#cb12-28" aria-hidden="true" tabindex="-1"></a><span class="fu">plot_landenv</span>(lc<span class="sc">$</span>elevation, <span class="at">times=</span><span class="fu">c</span>(<span class="dv">100</span><span class="sc">:</span><span class="dv">0</span>), <span class="at">speed=</span><span class="fl">0.1</span>)</span>
+<span id="cb12-29"><a href="#cb12-29" aria-hidden="true" tabindex="-1"></a><span class="co"># example of plotting entire time series</span></span>
+<span id="cb12-30"><a href="#cb12-30" aria-hidden="true" tabindex="-1"></a><span class="co"># plot_landenv(lc$min_temp, times="all", reverse=T, speed=0.03)</span></span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+</div>
+</details>
+</div>
+</section>
+<section id="config" class="level3">
+<h3 class="anchored" data-anchor-id="config">2.2 Config</h3>
+<p>Open this config file in Rstudio or any text editor to see the rules that will be applied to the landscape.</p>
+<div class="cell">
+<div class="sourceCode cell-code" id="cb13"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb13-1"><a href="#cb13-1" aria-hidden="true" tabindex="-1"></a><span class="co"># load config</span></span>
+<span id="cb13-2"><a href="#cb13-2" aria-hidden="true" tabindex="-1"></a>cf <span class="ot">&lt;-</span> <span class="fu">create_input_config</span>(<span class="at">config_file =</span> <span class="fu">here</span>(<span class="st">"config/config_simple.R"</span>))</span>
+<span id="cb13-3"><a href="#cb13-3" aria-hidden="true" tabindex="-1"></a><span class="co"># list all main elements of the config file</span></span>
+<span id="cb13-4"><a href="#cb13-4" aria-hidden="true" tabindex="-1"></a><span class="fu">names</span>(cf<span class="sc">$</span>gen3sis)</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+<div class="cell-output cell-output-stdout">
+<pre><code>[1] "general"        "initialization" "dispersal"      "speciation"    
+[5] "mutation"       "ecology"       </code></pre>
+</div>
+<div class="sourceCode cell-code" id="cb15"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb15-1"><a href="#cb15-1" aria-hidden="true" tabindex="-1"></a><span class="co"># list all elements of the general section, i.e. the main settings and not so much on the eco-evolutionary processes</span></span>
+<span id="cb15-2"><a href="#cb15-2" aria-hidden="true" tabindex="-1"></a><span class="fu">names</span>(cf<span class="sc">$</span>gen3sis<span class="sc">$</span>general)</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+<div class="cell-output cell-output-stdout">
+<pre><code>[1] "random_seed"                      "start_time"                      
+[3] "end_time"                         "max_number_of_species"           
+[5] "max_number_of_coexisting_species" "end_of_timestep_observer"        
+[7] "trait_names"                      "environmental_ranges"            
+[9] "verbose"                         </code></pre>
+</div>
+</div>
+<div style="background-color: lightgreen; padding: 1px;">
+🏋💻 <strong>Exercise</strong> [max 10 min] Open a config file and go though the eco-evolutionary rules that will be applied to the landscape.
+<details>
+<p><strong>Settings</strong></p>
+<p>We start our simulation at the latest avaiable time, i.e.&nbsp;5Ma, which corresponds to time step 500 since 1 time-step = 10 kyr. We end it a the latest available time-step. Sometimes, simulations can go forever, to avoid this we limit the maximum total number of species alive in a simulation to 50000 with max_number_of_species and the maximum number of species within one site to 20000 with max_number_of_coexisting_species. This stops and flags simulations that generate too many species (time constrain). We define which traits we will consider in our simulation with traits_names, in our example, species have a dispersal ability a optimum temperature and a temperature width trait.</p>
+<p><strong>Observer</strong></p>
+<p>The observer function saves and plot changes (real-time during model execution) over time in the conditions of the virtual world (biotic and abiotic) by saving custom information at designated time steps.</p>
+<p><strong>Initialization</strong></p>
+<p>The create_ancestor_species function creates the first specie(s) in the simulation. In this case, we create one species spread across all avaiable sites with low dispersal ability, optimum temperature at 20 degrees C and a temperature width (+-1).</p>
+</details>
+</div></section>
+</section>
+<section id="run-a-basic-simulation." class="level2">
+<h2 class="anchored" data-anchor-id="run-a-basic-simulation.">3. Run a basic simulation.</h2>
+</section>
+<section id="customize-simulations." class="level2">
+<h2 class="anchored" data-anchor-id="customize-simulations.">4. Customize simulations.</h2>
+</section>
+<section id="troubleshoot." class="level2">
+<h2 class="anchored" data-anchor-id="troubleshoot.">5. Troubleshoot.</h2>
+</section>
+
+</main>
+<!-- /main column -->
+<script id="quarto-html-after-body" type="application/javascript">
+window.document.addEventListener("DOMContentLoaded", function (event) {
+  const toggleBodyColorMode = (bsSheetEl) => {
+    const mode = bsSheetEl.getAttribute("data-mode");
+    const bodyEl = window.document.querySelector("body");
+    if (mode === "dark") {
+      bodyEl.classList.add("quarto-dark");
+      bodyEl.classList.remove("quarto-light");
+    } else {
+      bodyEl.classList.add("quarto-light");
+      bodyEl.classList.remove("quarto-dark");
+    }
+  }
+  const toggleBodyColorPrimary = () => {
+    const bsSheetEl = window.document.querySelector("link#quarto-bootstrap");
+    if (bsSheetEl) {
+      toggleBodyColorMode(bsSheetEl);
+    }
+  }
+  toggleBodyColorPrimary();  
+  const icon = "";
+  const anchorJS = new window.AnchorJS();
+  anchorJS.options = {
+    placement: 'right',
+    icon: icon
+  };
+  anchorJS.add('.anchored');
+  const isCodeAnnotation = (el) => {
+    for (const clz of el.classList) {
+      if (clz.startsWith('code-annotation-')) {                     
+        return true;
+      }
+    }
+    return false;
+  }
+  const clipboard = new window.ClipboardJS('.code-copy-button', {
+    text: function(trigger) {
+      const codeEl = trigger.previousElementSibling.cloneNode(true);
+      for (const childEl of codeEl.children) {
+        if (isCodeAnnotation(childEl)) {
+          childEl.remove();
+        }
+      }
+      return codeEl.innerText;
+    }
+  });
+  clipboard.on('success', function(e) {
+    // button target
+    const button = e.trigger;
+    // don't keep focus
+    button.blur();
+    // flash "checked"
+    button.classList.add('code-copy-button-checked');
+    var currentTitle = button.getAttribute("title");
+    button.setAttribute("title", "Copied!");
+    let tooltip;
+    if (window.bootstrap) {
+      button.setAttribute("data-bs-toggle", "tooltip");
+      button.setAttribute("data-bs-placement", "left");
+      button.setAttribute("data-bs-title", "Copied!");
+      tooltip = new bootstrap.Tooltip(button, 
+        { trigger: "manual", 
+          customClass: "code-copy-button-tooltip",
+          offset: [0, -8]});
+      tooltip.show();    
+    }
+    setTimeout(function() {
+      if (tooltip) {
+        tooltip.hide();
+        button.removeAttribute("data-bs-title");
+        button.removeAttribute("data-bs-toggle");
+        button.removeAttribute("data-bs-placement");
+      }
+      button.setAttribute("title", currentTitle);
+      button.classList.remove('code-copy-button-checked');
+    }, 1000);
+    // clear code selection
+    e.clearSelection();
+  });
+  function tippyHover(el, contentFn) {
+    const config = {
+      allowHTML: true,
+      content: contentFn,
+      maxWidth: 500,
+      delay: 100,
+      arrow: false,
+      appendTo: function(el) {
+          return el.parentElement;
+      },
+      interactive: true,
+      interactiveBorder: 10,
+      theme: 'quarto',
+      placement: 'bottom-start'
+    };
+    window.tippy(el, config); 
+  }
+  const noterefs = window.document.querySelectorAll('a[role="doc-noteref"]');
+  for (var i=0; i<noterefs.length; i++) {
+    const ref = noterefs[i];
+    tippyHover(ref, function() {
+      // use id or data attribute instead here
+      let href = ref.getAttribute('data-footnote-href') || ref.getAttribute('href');
+      try { href = new URL(href).hash; } catch {}
+      const id = href.replace(/^#\/?/, "");
+      const note = window.document.getElementById(id);
+      return note.innerHTML;
+    });
+  }
+      let selectedAnnoteEl;
+      const selectorForAnnotation = ( cell, annotation) => {
+        let cellAttr = 'data-code-cell="' + cell + '"';
+        let lineAttr = 'data-code-annotation="' +  annotation + '"';
+        const selector = 'span[' + cellAttr + '][' + lineAttr + ']';
+        return selector;
+      }
+      const selectCodeLines = (annoteEl) => {
+        const doc = window.document;
+        const targetCell = annoteEl.getAttribute("data-target-cell");
+        const targetAnnotation = annoteEl.getAttribute("data-target-annotation");
+        const annoteSpan = window.document.querySelector(selectorForAnnotation(targetCell, targetAnnotation));
+        const lines = annoteSpan.getAttribute("data-code-lines").split(",");
+        const lineIds = lines.map((line) => {
+          return targetCell + "-" + line;
+        })
+        let top = null;
+        let height = null;
+        let parent = null;
+        if (lineIds.length > 0) {
+            //compute the position of the single el (top and bottom and make a div)
+            const el = window.document.getElementById(lineIds[0]);
+            top = el.offsetTop;
+            height = el.offsetHeight;
+            parent = el.parentElement.parentElement;
+          if (lineIds.length > 1) {
+            const lastEl = window.document.getElementById(lineIds[lineIds.length - 1]);
+            const bottom = lastEl.offsetTop + lastEl.offsetHeight;
+            height = bottom - top;
+          }
+          if (top !== null && height !== null && parent !== null) {
+            // cook up a div (if necessary) and position it 
+            let div = window.document.getElementById("code-annotation-line-highlight");
+            if (div === null) {
+              div = window.document.createElement("div");
+              div.setAttribute("id", "code-annotation-line-highlight");
+              div.style.position = 'absolute';
+              parent.appendChild(div);
+            }
+            div.style.top = top - 2 + "px";
+            div.style.height = height + 4 + "px";
+            let gutterDiv = window.document.getElementById("code-annotation-line-highlight-gutter");
+            if (gutterDiv === null) {
+              gutterDiv = window.document.createElement("div");
+              gutterDiv.setAttribute("id", "code-annotation-line-highlight-gutter");
+              gutterDiv.style.position = 'absolute';
+              const codeCell = window.document.getElementById(targetCell);
+              const gutter = codeCell.querySelector('.code-annotation-gutter');
+              gutter.appendChild(gutterDiv);
+            }
+            gutterDiv.style.top = top - 2 + "px";
+            gutterDiv.style.height = height + 4 + "px";
+          }
+          selectedAnnoteEl = annoteEl;
+        }
+      };
+      const unselectCodeLines = () => {
+        const elementsIds = ["code-annotation-line-highlight", "code-annotation-line-highlight-gutter"];
+        elementsIds.forEach((elId) => {
+          const div = window.document.getElementById(elId);
+          if (div) {
+            div.remove();
+          }
+        });
+        selectedAnnoteEl = undefined;
+      };
+      // Attach click handler to the DT
+      const annoteDls = window.document.querySelectorAll('dt[data-target-cell]');
+      for (const annoteDlNode of annoteDls) {
+        annoteDlNode.addEventListener('click', (event) => {
+          const clickedEl = event.target;
+          if (clickedEl !== selectedAnnoteEl) {
+            unselectCodeLines();
+            const activeEl = window.document.querySelector('dt[data-target-cell].code-annotation-active');
+            if (activeEl) {
+              activeEl.classList.remove('code-annotation-active');
+            }
+            selectCodeLines(clickedEl);
+            clickedEl.classList.add('code-annotation-active');
+          } else {
+            // Unselect the line
+            unselectCodeLines();
+            clickedEl.classList.remove('code-annotation-active');
+          }
+        });
+      }
+  const findCites = (el) => {
+    const parentEl = el.parentElement;
+    if (parentEl) {
+      const cites = parentEl.dataset.cites;
+      if (cites) {
+        return {
+          el,
+          cites: cites.split(' ')
+        };
+      } else {
+        return findCites(el.parentElement)
+      }
+    } else {
+      return undefined;
+    }
+  };
+  var bibliorefs = window.document.querySelectorAll('a[role="doc-biblioref"]');
+  for (var i=0; i<bibliorefs.length; i++) {
+    const ref = bibliorefs[i];
+    const citeInfo = findCites(ref);
+    if (citeInfo) {
+      tippyHover(citeInfo.el, function() {
+        var popup = window.document.createElement('div');
+        citeInfo.cites.forEach(function(cite) {
+          var citeDiv = window.document.createElement('div');
+          citeDiv.classList.add('hanging-indent');
+          citeDiv.classList.add('csl-entry');
+          var biblioDiv = window.document.getElementById('ref-' + cite);
+          if (biblioDiv) {
+            citeDiv.innerHTML = biblioDiv.innerHTML;
+          }
+          popup.appendChild(citeDiv);
+        });
+        return popup.innerHTML;
+      });
+    }
+  }
+});
+</script>
+</div> <!-- /content -->
+
+
+
+</body></html>

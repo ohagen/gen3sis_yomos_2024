@@ -1,0 +1,1753 @@
+---
+title: "Supplementary Materials"
+subtitle:  "The macro-eco-evolutionary interplay between dispersal, competition, and landscape structure in generating biodiversity"
+authors:
+  - name: Hagen O
+    email: oskar@hagen.bio
+  - Viana SD 
+  - Wiegand T
+  - Chase JM 
+  - Onstein RE
+format: pdf
+editor: visual
+execute: 
+  echo: false
+  warning: false
+editor_options: 
+  chunk_output_type: console
+bibliography: references.bib
+---
+
+```{r}
+#| label: load-libs and data
+library(here)
+library(fields)
+library(RRphylo)
+library(corrplot)
+library(gen3sis)
+# library(rcartocolor)
+dir_base <- "code/2_scripts"
+here::i_am("./code/2_scripts/source.R")
+source(here(dir_base,"source.R"))
+
+# bypass is.interactive() trigered by quarto
+pls <- list(
+  "dir_base"=file.path(dir_base, "cluster"),
+  "dir_out"="c:/temp/dispdiv3/output",
+  "dir_env_gen"="c:/temp/dispdiv3/mx_space/ddl",
+  "dir_config_gen"="../../1_gen3sis_formalization/config",
+  "dir_out_zip"="c:/temp/dispdiv3/outputs_eve"
+  )
+source(here(pls$dir_base,"../local/supp_func.R"))
+source(here(pls$dir_base,"summary_stats/support", "sup_plot_summary.R"))
+source(here(pls$dir_base,"summary_stats/support", "sup_plot_traits.R"))
+source(here(pls$dir_base,"summary_stats/support", "call_stats_zip.R"))
+# get summary files for all model!
+ss_f <-get_ordered_files(file.path(pls$dir_out_zip, "temp_summary"), model=".rds", fend=".rds")
+ss_f <- ss_f[1:3] # select only main stats
+sss <- list()
+for (i in 1:length(ss_f)){
+  sss[[i]] <- readRDS(file.path(pls$dir_out_zip, "temp_summary", ss_f[i]))
+}
+names(sss) <- unlist(lapply(strsplit(ss_f, "_"), function(x){
+  r <- x[length(x)] # TODO expp names hare
+  r <- gsub(".rds", "", r)
+  return(r)
+}))
+
+for (li in 1:length(sss)){
+  sss[[li]]$stats$tt <- lapply(sss[[li]]$stats$tt, as.data.frame)
+}
+names(sss) <- c("M0", "ME", "MET")
+```
+
+# Environment
+
+We simulate 5 Myrs of environmental dynamics of four patches (i.e. A, B, C and D), inspired by a theoretical but realistic isolated island system placed in the south with a total area of 60X60 Km^2^ with site area = 1 Km^2^ and timestep=10'000 years and number of timesteps=501 (Animation 1). We consider dynamic topography, minimum and maximum temperature combined with sea level changes which intensify during the quaternary (\~last 2.6 Ma) and happened in a periodicity of 100 ky (i.e. 10 timesteps) [@pillans1998].  This approximates earths eccentricity with a conservative periodicity [@shepard2018] and reflects interactions among global climate dynamics and changes in incoming solar radiation, likely influencing ecological and evolutionary patterns. We approximating empirical mean temperature and sea levels [@westerhold2020] [@hoffmann2011]. Our dynamic temperature oscillates at similar periodicity and temporal intensity, so that lower temperature periods match with the periods of lowest sea levels (*Figure 1*). Given the randomly attribute location on Earth, i.e. south hemisphere, The south sides of each patch were 2℃ colder than the northern sides and were smoothened with a focal function of mean 3x3 sites (raster package). We derive $T_{min}$ and $T_{max}$ fluctuations though time decreasing 0.01℃ (i.e. lapse rate 0.01℃/m) for each increase in altitude (m). We draw minimum and maximum temperature from site mean temperatures by respectively subtracting and adding the absolute values from a normal distribution with mean=0 and standard deviation $SD=\frac{E_i}{max(E)}$ . This means that the distance between $T_{min}$ and $T_{max}$ increases in likelihood the higher the scaled site elevation $E_i$ (m) is. Lowest available elevation of all times was -115m and the highest elevation in all times was 803m from final timestep sea level (i.e. 0m). This result in temperature ranges of 0---5℃ (Animation 1, *Figure 2*). In all our simulations we penalize connectivity though a cost multiplier of geographical distance [@hagen2021]. We used a cost of four (4) for unsuitable sites (i.e. under sea level) and 1 for suitable sites with the addition of 0.1 per 100m slope difference between source and destination site. Empirical evidence suggest that for high elevation species, greater elevation equals greater dispersal barriers, as mountain peaks are often embedded in a low elevation matrix and thus creating an island-like system [@vasconcelos2020]. Moreover, by choosing a strong matrix resistance, i.e. four, we stress the effects of topography, geodynamics and sea-level changes considering habitat unsuitability within 10'000 years.
+
+Our simulations started with three patches (i.e. A, B and C) which do not change in topography and end with four (i.e. A, B, C and D) patches (Figure 1). Patch A and B have their connectivity periodically increased as a result of a shallow land bridge that increases in connectivity depending on sea level changes (Figure 1, Figure 3, Figure 4) while patch C remains relatively isolated. Patch D starts appearing around 1.5 Ma as a result of topographic and sea level changes.
+
+```{r}
+#| label: fig-envir
+#| fig-height: 5
+#| fig-cap: |
+#|   Connectivity costs in reference to the center of each patch (i.e. A,B,C and D) for two timesteps, i.e. Present (0 Ma, resp. A,B,C and D) and for 130'000 years ago (0.13 Ma, resp. E,F,G and H). Note the changes in connectivity due to sea level changes between the present and the lowest seal level period (i.e. 0.13 Ma). 
+library(raster)
+library(viridis)
+library(utils)
+library(vtable)
+env_vars <- readRDS(here("code/1_gen3sis_formalization/space/env_vars.rds"))
+lc <- readRDS(here("code/1_gen3sis_formalization/space/ddl/landscapes.rds"))
+#sc <- read.csv(here("code/1_gen3sis_formalization/space/sea_level_changes_501.csv"))
+# lc <- readRDS(here("code/1_gen3sis_formalization/space/ddl/landscapes.rds"))
+#elev_range <- get_range(range=list("min"=env_vars$elevation, "max"=env_vars$elevation))
+# run once again to get finally the correct temp range after setting the maximum!
+temp_range <- get_range(range=list("min"=env_vars$min_temp, "max"=env_vars$max_temp))
+
+tst <- c("0", "13")
+dist_mat <- NULL
+
+set_par(8,4)
+t_p <- 0
+for (tst_i in 1:length(tst)){
+  
+  # w <- 1
+  
+  # get full distance from local distances
+  neighbour_file <- here(file.path(pls$dir_env_gen,
+                            "distances_local",
+                            paste0("distances_local_", tst[tst_i], ".rds")))
+  distance_neighbours <- readRDS(neighbour_file)
+  hab_cell_mask <-  !is.na(lc$mean_temp[,tst[tst_i]])
+  habitable_cells <- as.integer(rownames(lc$mean_temp[hab_cell_mask,]))
+  num_cells <- nrow(distance_neighbours)
+  # get full distance matrix  
+  d_m<- gen3sis:::get_distance_matrix(habitable_cells,
+                                         num_cells,
+                                         distance_neighbours@p,
+                                         distance_neighbours@i,
+                                         distance_neighbours@x,
+                                         Inf)
+  # plot
+  for (s_i in 1:4){
+    t_p <- t_p+1
+    # s_i <- 1
+    dm_ti <- cbind(lc$mean_temp[hab_cell_mask,c('x', 'y')], cost=as.numeric(d_m[,patches$center_ids[s_i]]))
+    r_ti_si <- rasterFromXYZ(dm_ti)
+    plot(r_ti_si, main="", axes=FALSE, box=FALSE, colNA="black", col=viridis(10), breaks=round(seq(0,200,length.out=10),0),legend = FALSE)
+    if (t_p==1){
+     plot(r_ti_si, legend.only=TRUE, col=viridis(10), breaks=round(seq(0,200,length.out=10),0), horizontal=TRUE,
+     legend.width = 2,
+     legend.args=list(text='Connectivity cost', side=1, font=2, line=1.8, cex=0.8))
+    }
+    title(LETTERS[t_p], adj=0)
+    
+    points(x=patches$center_coords[,"x"]+2, y=patches_center_coords[,"y"]+3, pch=c("A", "B", "C", "D"), cex=0.9, col="grey6")
+    points(patches$center_coords[s_i,"x"],patches$center_coords[s_i,"y"] , pch=17, cex=1.3)
+    # plot costs
+    destin_patches <- c(1:4)[!(1:4%in%s_i)]
+    destin_patches_center_dist <- d_m[patches$center_ids[destin_patches],patches$center_ids[s_i]]
+    dests <- c(1:4)[!1:4%in%s_i]
+    points(patches$center_coords[dests,"x"],patches$center_coords[dests,"y"] , pch=4, cex=0.8)
+    text(x=patches$center_coords[destin_patches,"x"],y=patches$center_coords[destin_patches,"y"]-2, 
+         round(destin_patches_center_dist,0), cex=0.65)
+  }
+  
+  # plot(rasterFromXYZ(lc$mean_temp[,c("x", "y",tst[tst_i] )]))
+  # range_temp <- lc$max_temp[,tst[tst_i]]-lc$min_temp[,tst[tst_i]]
+  # plot(rasterFromXYZ(cbind(lc$mean_temp[,c("x", "y")], range_temp)))
+}
+```
+
+```{r}
+#| label: fig-envir_2
+#| fig-height: 5
+#| fig-cap: |
+#|   Connectivity costs in reference to the center of each patch (i.e. A,B,C and D) for two timesteps, i.e. Present (0 Ma, resp. A,B,C and D) and for 130'000 years ago (0.13 Ma, resp. E,F,G and H). Note the changes in connectivity due to sea level changes between the present and the lowest seal level period (i.e. 0.13 Ma). 
+library(raster)
+library(viridis)
+library(utils)
+lapserate <- 0.01 #Celsius decrease per m in altitude increase
+
+
+x <- seq(1, 60)
+y <- x
+env_vars <- readRDS(here("code/1_gen3sis_formalization/space/env_vars.rds"))
+lc <- readRDS(here("code/1_gen3sis_formalization/space/ddl/landscapes.rds"))
+#sc <- read.csv(here("code/1_gen3sis_formalization/space/sea_level_changes_501.csv"))
+# lc <- readRDS(here("code/1_gen3sis_formalization/space/ddl/landscapes.rds"))
+#elev_range <- get_range(range=list("min"=env_vars$elevation, "max"=env_vars$elevation))
+# run once again to get finally the correct temp range after setting the maximum!
+temp_range <- get_range(range=list("min"=env_vars$min_temp, "max"=env_vars$max_temp))
+
+tst <- c("0", "13")
+dist_mat <- NULL
+
+set_par(8,4)
+t_p <- 0
+for (tst_i in 1:length(tst)){
+  
+  # w <- 1
+  
+  # get full distance from local distances
+  neighbour_file <- here(file.path(pls$dir_env_gen,
+                            "distances_local",
+                            paste0("distances_local_", tst[tst_i], ".rds")))
+  distance_neighbours <- readRDS(neighbour_file)
+  hab_cell_mask <-  !is.na(lc$mean_temp[,tst[tst_i]])
+  habitable_cells <- as.integer(rownames(lc$mean_temp[hab_cell_mask,]))
+  num_cells <- nrow(distance_neighbours)
+  # get full distance matrix  
+  d_m<- gen3sis:::get_distance_matrix(habitable_cells,
+                                         num_cells,
+                                         distance_neighbours@p,
+                                         distance_neighbours@i,
+                                         distance_neighbours@x,
+                                         Inf)
+  # plot
+  for (s_i in 1:4){
+    t_p <- t_p+1
+    # s_i <- 1
+    dm_ti <- cbind(lc$mean_temp[hab_cell_mask,c('x', 'y')], cost=as.numeric(d_m[,patches$center_ids[s_i]]))
+    r_ti_si <- rasterFromXYZ(dm_ti)
+    plot(r_ti_si, main="", axes=FALSE, box=FALSE, colNA="black", col=viridis(10), breaks=round(seq(0,200,length.out=10),0),legend = FALSE)
+    if (t_p==1){
+     plot(r_ti_si, legend.only=TRUE, col=viridis(10), breaks=round(seq(0,200,length.out=10),0), horizontal=TRUE,
+     legend.width = 2,
+     legend.args=list(text='Connectivity cost', side=1, font=2, line=1.8, cex=0.8))
+    }
+    title(LETTERS[t_p], adj=0)
+    
+    points(x=patches$center_coords[,"x"]+2, y=patches_center_coords[,"y"]+3, pch=c("A", "B", "C", "D"), cex=0.9, col="grey6")
+    points(patches$center_coords[s_i,"x"],patches$center_coords[s_i,"y"] , pch=17, cex=1.3)
+    # plot costs
+    destin_patches <- c(1:4)[!(1:4%in%s_i)]
+    destin_patches_center_dist <- d_m[patches$center_ids[destin_patches],patches$center_ids[s_i]]
+    dests <- c(1:4)[!1:4%in%s_i]
+    points(patches$center_coords[dests,"x"],patches$center_coords[dests,"y"] , pch=4, cex=0.8)
+    text(x=patches$center_coords[destin_patches,"x"],y=patches$center_coords[destin_patches,"y"]-2, 
+         round(destin_patches_center_dist,0), cex=0.65)
+  }
+  
+  # plot(rasterFromXYZ(lc$mean_temp[,c("x", "y",tst[tst_i] )]))
+  # range_temp <- lc$max_temp[,tst[tst_i]]-lc$min_temp[,tst[tst_i]]
+  # plot(rasterFromXYZ(cbind(lc$mean_temp[,c("x", "y")], range_temp)))
+}
+```
+
+# Eco-evolutionary models
+
+In short, M0 assume a fixed dispersal and competitive traits for all species within a simulation (n=`r nrow(sss$M0$parms)`). ME breaks this assumption by allowing dispersal and competitive traits to evolve freely, thus diverging with time between species (n=`r nrow(sss$ME$parms)`). MET adds a zero sum (i.e. a trade-off) between dispersal and competitive traits, assuming that no super species (i.e. $d_i=1$ , $l_i=1$) are possible (n=`r nrow(sss$MET$parms)`). M0 serves as a reference and allowed the exploration of parameter ranges and sensitivity the system. The two alternative simulation scenarios (i.e. ME and MET), referred to as counterfactuals, investigate the effects of manipulating different components of the model. Specifically, these counterfactuals involved modifying the underlying biological model specifically referent to the evolution and trade-offs between dispersal and competitive abilities, focusing on how dispersal and species interactions affect colonization and other emergent properties in our eco-evolutionary models.
+
+This automatically made species within a simulation not only diverge between each other on their temperature optime $T_i$ and niche widht $\omega_i$ (i.e. for M0, ME and MET), but also on dispersal $d_i$ and competitive $l_i$ traits (i.e. for ME and MET). For each counter-factual, we ran 2000 simulations with the same parameters for all models. This systematic exploration of alternative scenarios allowed us to assess the impact of specific model parameters on the resulting biodiversity patterns. We additionally run $XYZ=XYZ$ Specifically, we collected $\alpha$, $\beta$ and $\gamma$ biodiversity metrics, colonization, speciation, extinction as well as trait proxies related to environmental and biotic suitability.
+
+## Initial conditions
+
+All models, i.e. M0, ME and MET, were initiated at 5 Ma with three species, each with populations spread thought the suitable sites of each patch (i.e. sp1 on patch A, sp2 on patch B, and sp3 on patch C). Initial populations had thermal range $\omega_i=0.4$ and thermal optimum equal to the local mean temperature $T_i=T_{mean}$.
+
+We did a full factorial experiment ranging from extreme dispersal and competitive abilities $d_i=$ `r put_brak(sss[[1]]$parms$dispersal)` $l_i=$ `r put_brak(sss[[1]]$parms$competition)` and fixed $\Theta_s=65$ (@fig-init-parameters) . For model MET we impose the trade-off to the same parameters as in the other models, so that no initial species would have a "assumingly wrong" -- meaning, wrong for consistency of MET. We randomized the seed at this stage, so that each single simulation could be reproduced.
+
+```{r}
+#| label: fig-init-parameters
+#| fig-height: 2
+#| fig-cap: |
+#|   Initial competition and dispersal parameters for the main models and 
+#|   experiments. Colors show the CPU time per simulation (n=6000). 
+
+# get list of desired stats
+lpst <- lapply(sss, function(x){get_parm_stats(x$parms,x$stats$t)})
+plot_lxy_summary(y="competition", x="dispersal", data=lpst, datacol="cpu_time", colsrap = c("seagreen","orange3", "red4"))
+```
+
+## Dispersal
+
+Frequencies of dispersal are given according to a Weibull function that has scale changed by d resulting in concentrated short range dispersal events for small d with increasingly larger and longer tails for larger d (@fig-dispersal).
+
+```{r}
+#| label: fig-dispersal
+#| fig-height: 2
+#| fig-cap: Histogram showing two extreme frequencies of 1000 dispersal events in a weibull distribution with shape of 2 and scale of 1 (A) and 50 (B). Note the difference of the x axis scales.
+
+set_par(2,2)
+par(mai=c(0.5,0.5,0.3,0.2))
+hist(rweibull(1000, 2, 1), main="", xlab="Distance (cost x Km)", cex=0.4, col="black")
+title(LETTERS[1], adj=0)
+hist(rweibull(1000, 2, 50), main="", xlab="Distance (cost x Km)", cex=0.4, col="black")
+title(LETTERS[2], adj=0)
+```
+
+## Ecological equilibrium
+
+Ecological equilibrium was assumed for every site and for every timestep. Environmental fitness considered min and max temperature. Population size $N_i$ changes according to local site conditions (i.e. $T_{min}, T_{max}$\[9---26℃\] and evolving species temperature optimum $T_i$ and thermal range $\omega_i$ according to the geometric mean of a Gaussian environmental function at minimum and maximum site temperature (for an example, see @fig-environmental-fitnress).
+
+```{r}
+#| label: fig-environmental-fitnress
+#| fig-height: 5
+#| fig-cap: |
+#|   Population growth across a temperature gradient in °C for three different species
+#|   with varrying thermal optimum (T) amd thermal range ($\omega$) traits.
+#|   Species X (dark red) has  T=18°C and $\omega$=0.1; Species Y (green) has T=18 and
+#|    $\omega$=0.25;
+#|   Species Z (blue) has T=16 and $\omega$=0.2. Temperature-dependent growth
+#|   is apllied a constant and equal rate to all simulations. Maximal growth is
+#|    proportional to the
+#|   geometric mean of the fitness of the focal species at the minimal and maximal
+#|   temperature in the site.
+ 
+
+fg <- function(x,a=1,b,c){
+  a <- a/c
+  v <- a*exp(-((x-b)^2/(2*c^2)))
+  return(v)
+}
+cols=rainbow(3)
+plot(fg(x=0.5, b=seq(0,1,0.05), c=.1), type='l', xaxt="n", col=cols[1], lwd=2,
+     ylab = "Growth", xlab=expression("Temperature in Celcius"))
+lines(fg(x=0.5, b=seq(0,1,0.05), c=.25), col=cols[2], lwd=2)
+lines(fg(x=0.4, b=seq(0,1,0.05), c=.2), col=cols[3], lwd=2)
+axis(1, at=1:length(seq(0,1,0.05)), labels=seq(9,26,length.out=length(seq(0,1,0.05)) ))
+legend("topleft", legend = c("Species X", "Species Y", "Species Z"), lwd=2, col=cols, bty='n')
+```
+
+Relative growth rate decreases linearly with conspecific population size $B_i$ in the site with a conspecific interaction coefficient $\alpha_{ff}$ and a heterospecific interaction coefficient $\alpha_{fh}$. The conspecific interaction coefficient was fixed for all simulations (i.e. $\alpha_{ff}=0.2$), since our focus was on components on intrerspecific competition, i.e. modulated though heterospecific tolerance trait ($l$). For an example, see the interactions between three (3) and thirteen (13) species though ODE (i.e. 30 interaction) in our Lotka-Volterra model type (@fig-ecology-intercompetition AB and C respectively).
+
+```{r}
+#| label: fig-ecology-intercompetition
+#| fig-height: 5
+#| fig-cap: |
+#|   Local dynamics within 10'000 years showing population size changes for different communities (ABC) and comparison of mean last 10 timesteps of the ODE agaist estimated equilibria (D). Crosses show the estimated ecological equilibria. (A)  Species 1 and 2 have a thermal optimum closer to the thermal optimum betwenn site min and maximal temperatures than species 3. Moreover, species 1, 2 and 3 have thermal range of $\omega_1=0.1,\omega_2=0.25, \omega_3=0.2$ and same heterospecific tolerance (l=0.98). (B) we change heterospecific tolerance to ($l_1=0.9, l_2=0.98, l_3=0.96$). (C) Random community of 13 species. (D) Comparison of mean last 10 timesteps of ODE of community in (C) agaist estimated equilibria; grey lines show zero lines and dashed line show the 1-1 line. Note that we use here only 30 interactions though time and we increase in precison by increasing the number of interactions (ODE timesteps) and decreasing the number of coexisting species.
+
+ss_eff_emp <- list("dispersal"=NA, "dispersal_success"=NA, "environmental_filter"=NA, "competition_c"=NA, "competition_l"=NA)
+ss_eff <- list()
+
+# prepare input from traits list (t_l) and landscape list (l_l)
+# return traits and landscape
+prep_imp <- function(t_l,l_l){
+  traits <- matrix(unlist(t_l), ncol=length(t_l))
+  colnames(traits) <- names(t_l)
+  landscape <- matrix(unlist(l_l), ncol=length(l_l))
+  colnames(landscape) <- names(l_l)
+  return(list("landscape"=landscape, "traits"=traits))
+}
+
+set_exp <- function(abundance, t_l, l_l, t_s){
+  prep <- prep_imp(t_l = t_l, l_l = l_l)
+  cols <- rainbow(length(abundance))
+  t_s_l <- length(t_s)
+  abt <- matrix(NA,ncol=length(abundance), nrow=t_s_l)
+  colnames(abt) <- names(abundance)
+  abt[1,] <- abundance
+  ss_eff <- list()
+  assign("ss_eff", ss_eff, envir = .GlobalEnv)
+  return(list("abt"=abt, "t_s_l"=t_s_l, "prep"=prep, "cols"=cols, "t_s"=t_s))
+}
+
+plot_exp <- function(abt, epx, ...){
+  plot(NULL, xlab="Time", ylab="Population size (N)",
+       xlim=c(0, epx$t_s_l), ylim=c(0, max(abt, na.rm=T)),  ...)
+  for (spi in names(abundance)){
+    lines(abt[,spi], col=epx$cols[as.numeric(spi)], lwd=2)
+  }
+  legend("topleft", legend = colnames(epx$abt), col=epx$cols, lwd=2, bty="n")
+}
+s_e_f_tt <- function(abundance, traits, landscape, ss_eff_i=ss_eff){
+  ns <- length(abundance)
+  # set temp_id
+  temp_id_size <- ns+2
+  temp_id <- matrix(NA, ncol=temp_id_size, nrow=length(ss_eff_emp))
+  colnames(temp_id) <- c("id", "patch", names(abundance))
+  rownames(temp_id) <- names(ss_eff_emp)
+  temp_id[,"id"] <- 1
+  temp_id[,"patch"] <- 1
+  mask_patch <- rep(T,temp_id_size)
+  mask_patch[1:2] <- FALSE
+  # set env niche
+  env_min_fg <- fg(x=landscape[,"min_temp"], a=1, b=traits[, "mean_temp"], c=traits[, "temp_width"])
+  env_max_fg <- fg(x=landscape[,"max_temp"], a=1, b=traits[, "mean_temp"], c=traits[, "temp_width"])
+  # set growth rate
+  g <- .1
+  # abundance_tii first is only what the env. determines to be the new abundances
+  r_f <- g*sqrt(env_min_fg*env_max_fg) # geometric mean
+  temp_id["environmental_filter",mask_patch] <- r_f
+  # Competition
+  c_c <- traits[,"competition_c"] # intra competition
+  c_l <- traits[,"competition_l"]
+  # vector c_c
+  v_c_c <- (1-c_c)*abundance # the larger the c_c the better for the species
+  temp_id["competition_c",mask_patch] <- v_c_c
+  # abundance_tii accounts now to the reduction of intra competition c_c 
+  # abundance_tc <- abundance-v_c_c
+  # remove conspecifics
+  # prepare matrx
+  abd_l <- matrix(abundance, nrow=ns, ncol=ns)
+  diag(abd_l) <- 0
+  # apply c_l
+  v_c_l <- (1-c_l)*colSums(abd_l)
+  temp_id["competition_l",mask_patch] <- v_c_l
+  # abundance_tii accounts now to the reduction of inter competition c_l
+  # abundance_tl <- abundance-v_c_l
+  temp_id["dispersal",mask_patch] <- as.numeric(abundance==1)
+  abundance_tii <- abundance*(r_f-v_c_c-v_c_l)
+  #abundance thhreashold
+  # abundance_tii[abundance_tii<0.001] <- 0
+  temp_id["dispersal_success",mask_patch] <- as.numeric(abundance>0)*temp_id["dispersal",mask_patch]
+  ss_eff_i[[length(ss_eff_i)+1]] <- temp_id
+  return(list("abundance"=abundance_tii, "ss_eff"=ss_eff_i))
+}
+
+# EQUILIBRIUM SOLUTION
+s_e_f_t <- function(abundance, traits, landscape){
+  # traits <- epx$prep$traits
+  # landscape <- epx$prep$landscape
+  ns <- length(abundance)
+  #### get rf, here r_f is the per capita growth rate that depends on the local site conditions 
+  # set env niche
+  env_min_fg <- fg(x=landscape[,"min_temp"], a=1, b=traits[, "mean_temp"], c=traits[, "temp_width"])
+  env_max_fg <- fg(x=landscape[,"max_temp"], a=1, b=traits[, "mean_temp"], c=traits[, "temp_width"])
+  # set growth rate
+  g <- .1
+  # abundance_tii first is only what the env. determines to be the new abundances
+  r_f <- g*sqrt(env_min_fg*env_max_fg) # geometric mean
+  
+  ###### get (a_ff) = same species interaction coefficient and (afh)= heterospecific interaction coefficient 
+  # get traits Competition
+  c_c <- traits[,"competition_c"] # intra competition
+  c_l <- traits[,"competition_l"]
+  
+  # set a_ff and a_fh
+  a_ff <- 1-c_c
+  a_fh <- 1-c_l
+  
+  # check if conditions are met in order to continue
+  if (any(a_ff<=a_fh)){
+    stop("a_ff has to be bigger than a_fh for this equilibrium function to be used! Check your intial and evolutionary conditions of the competition traits.")
+  }
+  
+  ####### get K_f = the carrying capacity of species f (that is the equilibrium for the case without heterospecific population size
+  K_f <- r_f/a_ff
+  ###### get J = the total population sizes J* of the community in equilibrium
+  J <- get_J(a_ff, a_fh, K_f)
+  wistop <- FALSE
+  keep_on_while <- rep(TRUE, ns)
+  while(wistop==FALSE){
+    shall_live <- (a_ff*K_f)>(a_fh*J)
+    if (all(shall_live[keep_on_while])){
+      B_f <- ((a_ff*K_f)-(a_fh*J))/(a_ff-a_fh)
+      B_f[!shall_live] <- 0
+      wistop <- TRUE
+    } else{
+      a_ff[!shall_live] <- 0
+      a_fh[!shall_live] <- 0
+      K_f[!shall_live] <- 0
+      keep_on_while <- shall_live
+      J <- get_J(a_ff, a_fh, K_f)
+    }
+  }
+  names(B_f) <- names(abundance)
+  B_f[B_f<0] <- 0
+  return(B_f)
+}
+
+get_J <- function(a_ff, a_fh, K_f){
+  J <- sum((a_ff*K_f)/(a_ff-a_fh), na.rm=T)/(1+sum((a_fh/(a_ff-a_fh)), na.rm=T)) # new
+  return(J)
+}
+
+run_exp <- function(epx, ss_eff){
+  for (ti in epx$t_s[-1]){
+    prev_abd <- epx$abt[ti-1,]
+    dt <- s_e_f_tt(abundance=prev_abd, 
+                   traits=epx$prep$traits, 
+                   landscape=epx$prep$landscape, 
+                   ss_eff_i=ss_eff)
+    epx$abt[ti,] <- prev_abd+dt$abundance
+    epx$abt[ti,epx$abt[ti,]<0] <- 0
+    ss_eff <<- dt$ss_eff
+  }
+  return(list("epx"=epx, "ss_eff"=ss_eff))
+}
+
+
+#### RUN EXPERIMENT 
+set.seed(2023)
+set_par(4,2)
+es <- 0
+t_l <- list("mean_temp"=c(.5,.5,.4,rep(.6,es)), 
+            "temp_width"=c(0.1,0.25,0.2,rep(0.23,es)), 
+            "competition_c"=c(0.8,0.8,0.8, rep(0.8,es)), 
+            "competition_l"=c(0.98,0.98,0.98,rep(1,es)))
+l_l <- list("min_temp"=0.43, "max_temp"=0.54)
+abundance <- c(0.05, 0.05, 0.05)
+names(abundance) <- 1:(es+3)
+epx <- set_exp(abundance, t_l, l_l, t_s=1:30)
+out <- run_exp(epx, ss_eff)
+plot_exp(out$epx$abt, out$epx)
+abd_eq <- s_e_f_t(abundance, epx$prep$traits, epx$prep$landscape)
+points(y=abd_eq, x=rep(epx$t_s_l, length(abd_eq)), col=epx$cols, pch=4, cex=2, lwd=2)
+title(LETTERS[1], adj=0)
+
+es <- 0
+t_l <- list("mean_temp"=c(.5,.5,.4,rep(.6,es)), 
+            "temp_width"=c(0.1,0.25,0.2,rep(0.23,es)), 
+            "competition_c"=c(0.8,0.8,0.8, rep(0.8,es)), 
+            "competition_l"=c(0.9,0.98,0.96,rep(1,es)))
+l_l <- list("min_temp"=0.43, "max_temp"=0.54)
+abundance <- c(0.05, 0.05, 0.05)
+names(abundance) <- 1:(es+3)
+epx <- set_exp(abundance, t_l, l_l, t_s=1:30)
+out <- run_exp(epx, ss_eff)
+plot_exp(out$epx$abt, out$epx)
+abd_eq <- s_e_f_t(abundance, epx$prep$traits, epx$prep$landscape)
+points(y=abd_eq, x=rep(epx$t_s_l, length(abd_eq)), col=epx$cols, pch=4, cex=2, lwd=2)
+title(LETTERS[2], adj=0)
+
+es <- 13 # community size
+grid_size <- 1000 # 
+range_c_c <- seq(0.8,0.8,length.out=grid_size)
+range_c_l <- seq(0.9,1,length.out=grid_size)
+range_mean_temp <- seq(0.4,0.5,length.out=grid_size)
+range_temp_width <- seq(0.2,0.6,length.out=grid_size)
+t_l <- list("mean_temp"=sample(range_mean_temp, size=es,replace = T), 
+            "temp_width"=sample(range_temp_width, size=es,replace = T), 
+            "competition_c"=sample(range_c_c, size=es,replace = T), 
+            "competition_l"=sample(range_c_l, size=es,replace = T))
+l_l <- list("min_temp"=0.43, "max_temp"=0.54)
+abundance <- sample(seq(0.05,0.8,length.out=grid_size), size=es,replace = T)
+#abundance <- rep(1,es)
+names(abundance) <- 1:es
+epx <- set_exp(abundance, t_l, l_l, t_s=1:30)
+out <- run_exp(epx, ss_eff)
+plot_exp(out$epx$abt, out$epx)
+abd_eq <- s_e_f_t(abundance, epx$prep$traits, epx$prep$landscape)
+points(y=abd_eq, x=rep(epx$t_s_l, length(abd_eq)), col=epx$cols, pch=4, cex=2, lwd=2)
+title(LETTERS[3], adj=0)
+
+
+colmeans <- colMeans(out$epx$abt[(out$epx$t_s_l-10):out$epx$t_s_l,])
+plot(jitter(abd_eq), jitter(colmeans), col=epx$cols, ylab="mean last 10 timesteps ODE", xlab="Estimated equilibria", pch=4, lwd=0)
+abline(h=0, col="darkgrey", lwd=2)
+abline(v=0, col="darkgrey", lwd=2)
+lines(0:2, 0:2, lwd=2, lty=2)
+points(jitter(abd_eq), jitter(colmeans), col=epx$cols, pch=4, lwd=2)
+title(LETTERS[4], adj=0)
+```
+
+### Equilibrium equations
+
+We want to estimate the equilibrium of our Lotka-Volterra model that describes the dynamics of a focal species f in a given site, depending on other heterospecific species k :
+
+$$
+\frac{dN_f}{dt}\frac{1}{N_f}=r_f-\alpha_{ff}N_f-\alpha_{fh}\sum_{k\neq f}N_k
+$$ {#eq-S1}
+
+with parameters $r_f, \alpha_{ff}$ and $\alpha_{fh}$. We first estimate the carrying capacity of a local population of species f (that is the equilibrium for the case $\alpha_{fh}=0$), that is determined by given by $N_f=r_f/\alpha_{ff}$ and by inserting the site-condition dependency of the maximal per capita growth rate r_f from equation 2 we obtain
+
+$$
+K_f=\frac{r_f}{\alpha_{ff}}=\frac{g}{\alpha_{ff}}\times\sqrt{n_f(T_min)\times{n_f}(T_{max}})
+$$ {#eq-S2}
+
+The total population size of all species in the site is given by $J=\sum_{i=1}^{S}N_i$ where S is the total number of species in the site. Assuming zero-sum dynamics, which emerges if there is density dependence at the individual scale (e.g., through crowding competition), the number of heterospecifics at the site is given in good approximation by $\sum_{i\neq f} N_i=J-N_f$ . Thus, equation 1 in equilibrium simplifies to
+
+$$
+0=r_f-\alpha_{ff} N_f^\ast+\alpha_{fh} N_f^\ast-\alpha_{fh}J          $$ {#eq-S3}
+
+which leads to $r_f-\alpha_{fh}J =(\alpha_{ff}-\alpha_{fh})N_f^\ast$, which yields the equilibrium
+
+$$
+N_f^\ast=\frac{r_f-\alpha_{fh}J}{\alpha_{ff}-\alpha_{fh}}
+$$ {#eq-S4}
+
+Thus, besides the condition that $\alpha_{ff}>\alpha_{fh}$ (i.e. the conspecific interaction coefficient is larger than the heterospecific interaction coefficient), feasibility (i.e., a positive equilibrium $N_f^*$ requires that
+
+$$
+\alpha_{fh}J<r_f
+$$ {#eq-S5}
+
+which also means that heterospecific competition must be sufficiently small to allow population growth at low populations sizes (this is the so called invasion criterion). Note that we obtain from equation 5 for small abundances of the focal species f the per-capita population growth rate $\frac{dN_f}{dt} \frac{1}{N_f} =r_f-\alpha_{fh}J$, which is positive if equation is satisfied. As explained in detail in Wiegand et al. (2021), the total population size J in one site at equilibrium can be then be estimated as $$
+    J=\frac{\sum_{f=1}^S\frac{\alpha_{ff}K_f}{\alpha_{ff}-\alpha_{fh}}} {(1+\sum_{f=1}^S \frac{\alpha_{fh}}{\alpha_{ff}-\alpha_{fh}})}
+$$ {#eq-S6}
+
+In the special case where the interaction coefficients are the same for all species (as in our M0 model), we can derive a more detailed condition for the per capita population growth rates $r_f=\alpha_{ff}K_f$ to obtain positive abundances. In this case the community size $J$ of the community in equilibrium can be estimated as
+
+$$
+    J=\frac{S\frac{1}{\alpha_{ff}\alpha_{fh}}}{(1+S\frac{\alpha_{fh}}{\alpha_{ff}-\alpha_{fh}})}\frac{1}{S}\sum_{f=1}^S{r_f}
+$$ {#eq-S7}
+
+and with $\overline{r_f}=\frac{1}{S}\sum_{f=1}^S{r_f}$ being the community average maximal per capita population growth rate we find together with equation 4 the feasibility condition.
+
+$$\frac{r_f}{\overline{r_f}}>\frac{S\alpha_{fh}}{\alpha_{ff}+\alpha_{fh}(S-1)}=\mu$$ {#eq-S8}
+
+The factor $\mu$ is always smaller than one and particularly small if the number of species (S) and the heterospecific interaction coefficient $\alpha_{fh}$ are small. It approaches a value of one if the species richness *S* becomes large and/or if heterospecific competition $\alpha_{fh}$ approaches the strength of conspecific competition $\alpha_{ff}$. Equation 8 defines a minimum value for the growth rate $r_f$ to allow for a positive equilibrium. Equation 8 thus tells us that a species will go extinct in a given site (i.e. having a negative equilibrium abundance) if its maximal per capita population growth rate $r_f$ is too small, compared to the average per capita population growth rate $\overline{r_f}$ of all species at the site. Importantly, the environmental conditions, leading to lower growth rate $r_f$, can be poorer if there are fewer species at the site and/or if heterospecific competition is weaker.
+
+To estimate equilibrium in the context of competition dynamics, we implement an iterative approach. Firstly, all species in a site are checked to determine if $a_{ff}>a_{ff}$ (condition 1, eq. 4). If not, the species is removed from consideration as conspecifics compete weaker than heterospecifics. Next, the carrying capacity ($J^{*}$) is estimated based on the values of $K_f, a_{ff}, a_{fh}$ for each species *f (*eq. 2). Then, all species are checked again to see if the product of the intraspecific competition coefficient and carrying capacity is greater than the product of the interspecific competition coefficient $a_{ff}K>a_{fhJ^{*}}$ (condition 2, eq. 4).  Species that do not meet this condition, indicating a too low carrying capacity, are removed, and the estimation process returns estimating $J^{*}$ (eq. 6). This is repeated until all remaining species satisfy the condition 2. Finally, the equilibrium of each species$N^*_f$ is demonstrated using equation 6 (@fig-ecology-intercompetition).
+
+## Summary statistics
+
+We conducted several statistics using custom and code from several R-packages [@kembel2010][@bortolussi2006][@castiglione2021], specifically, $log_{10}(\bar{\alpha})$: Log 10 of mean alpha diversity (all sites) at final timestep. $\overline{occup}~Km^2$: Mean regional occupancy calculated in Km2 according to the mean number of sites occupied by all species through time. $Occupancy\space change %$: Proportion of occupancy change during the simulation. $\frac{Slope\ dispersal}{T_{start}/T_{end}}$: Rate of change in dispersal trait over time. $Dispersal\ (d)_{t_{start}}$: Dispersal trait value at the initial timestep. $\phi$: Speciation threshold or time of isolation until reproductive isolation occurs. $l_{t_{start}}$: Competition trait value at the initial timestep. $Extinction\ prop.$: Proportion of extinction events in a simulation over final gamma diversity. $Speciation\ prop.$: Proportion of speciation events in a simulation over final gamma diversity. $\gamma$: Final gamma diversity, or final regional taxonomic richness (number of species alive at the last timestep). $Turnover$: Turnover between speciation and extinction. $Speciation\ invar.$: Temporal speciation invariability. $Extinction\ invar.$: Temporal extinction invariability. $Turnover\ invar.$: Temporal turnover invariability. $\bar{N}_{5\%\ t_{end}}$: Mean population size of its 5% quantile at final timestep. $\bar{N}_{50\%\ t_{end}}$: Mean population size at final timestep. $\bar{N}_{95\%\ t_{end}}$: Mean population size of its 95% quantile at final timestep. $\bar{PD}_{\alpha}$: The Mean Faith's Phylogenetic Diversity at the site level. $\bar{\alpha}$: Mean alpha diversity of the entire archipelago. $\beta\%$: Proportional species turnover. $\beta W$: Whittaker beta diversity. $Zeta\ zeta$: Proportion of species that are common to all assemblages. $Eta\ eta$: Proportion of species that are not unique to an assemblage nor common to all assemblages. $Theta\ theta$: Species that are unique to an assemblage. $PD_{S}$: Standardized value of the unrooted Phylogenetic Diversity measure for species. $MPD_{S}$: Standardized value of the Mean Pairwise Distance measure. $MNTD_{S}$: Standardized value of the mean nearest taxon distance measure. $CD_{X-Y}$: Standardized Community Distance between two locations. $Mode\ d$: Number of modes at the dispersal trait distribution at final timestep. $\bar{d}_{50\%\ t_{end}}$: Mean dispersal trait at final timestep. $\bar{T}_{50\%\ t_{end}}$: Mean thermal optimum trait at final timestep. $\bar{\omega}_{50\%\ t_{end}}$: Mean thermal range trait at final timestep. $\bar{l}_{50\%\ t_{end}}$: Mean tolerance to other species trait at final timestep. $Spread\ d\ t_{end}$: The range between the lowest and highest dispersal trait values at the final timestep. $\beta_{max\ split}$: The complete phylogenetic beta value derived from the Maximum Likelihood estimation within the Beta-splitting model. Additional recorded values include: $Finished$: Status of final simulation, if OK, simulation was finished. $CPU\ time\ (h)$: CPU time in hours for simulation.
+
+## M0
+
+M0 diversity statistics reflected our expectations on general patterns of diversity, such as highest spetiation rates at intermediary diversity diversity levels @fig-sumstats_1-M0 . Meaning that peaks of $\gamma$ diversity relate with the spatial structure of our landscape. After investigation, all speciation events of simulations with dispersal $d_i<0.1$ happened within patches, and mostly during the dynamic phase (@fig-speciation-M0-though_time A). Speciation within patches was only observed in M0, as for ME and MET dispersal quickly evolved beyond the critical and small. We also can notice the qualitative changes in speciation events for intermediary dispersal $d_i=[0.15-0.55]$, which started involving speciation events between patches C and D, but for patch D only at the dynamic time phase, i.e. 2--0 Ma (@fig-speciation-M0-though_time C).
+
+```{r}
+#| label: fig-sumstats_1-M0
+#| fig-height: 6
+#| fig-cap: !expr paste("Summary statistics for M0 though dispersal. Each line corresponds to simulation within a same competitive value along dispersal ability at the initial timestep.", paste(paste0("(",LETTERS[1:length(main_stats_names)], ") ", unlist(lapply(stats_symbol_lib[main_stats_names[x]], function(x2){x2[2]})), collapse=" ")))
+
+mbt <- get_parm_stats(parms = sss[[1]]$parms, stat = sss[[1]]$stats$t)
+main_stats_names <- c("gamma", "mtx_beta_prop_T","mtx_mean_alpha_T", "mtx_zeta_T","mtx_eta_T","maxlik_betasplit_TF","speciations_perc", "extinctions_perc", "mtx_MPD_S_T", "mtx_MNTD_S_T")#
+plot_stat_classes_summary(mbt, main_stats_names)
+```
+
+```{r}
+# prepare additional summary stats plots
+
+plot_name <- "Additional summary statistics for M0 though initial dispersal values. Each line corresponds to simulations within a same competitive value, along dispersal ability."
+
+mbt <- get_parm_stats(parms = sss[[1]]$parms, stat = sss[[1]]$stats$t)
+
+additional_stats <- list(8:15, 16:24, 25:33, 39:47, 48:57, 78:84, 85:93, 94:101)
+
+lables_fig_add <- unlist(lapply(additional_stats, function(x){
+  val <- paste(plot_name, paste(paste0("(",LETTERS[1:length(x)], ") ", unlist(lapply(stats_symbol_lib[
+    colnames(mbt)[!colnames(mbt)%in%main_stats_names][x]
+    ], function(x2){x2[2]})), collapse=" ")))
+  return(val)
+}))
+
+```
+
+```{r}
+#| label: fig-sumstats_rest-M0
+#| fig-height: 6
+#| fig-cap: !expr lables_fig_add
+#|   
+
+for (add_i in 1:length(additional_stats)){
+  s_veci <- additional_stats[[add_i]]
+  plot_stat_classes_summary(mbt, colnames(mbt)[!colnames(mbt)%in%main_stats_names][s_veci])
+}
+
+```
+
+```{r}
+#| label: fig-speciation-M0-though_time
+#| fig-height: 4
+#| fig-cap: |
+#|   Mean speciation percentage for M0 with dispersal (A) smaller than, 0.15; (B) between 0.15 and 0.55; and (C) bigger than 0.55. We show for each patch (in different collors) and each phase (i.e. Total 4.5-0Ma, Stable 4.5-2.5Ma, Dynamic 2-0Ma) for speciation events between or within patches (respectively triangles and circels).
+  mbt <- get_parm_stats(parms = sss[[1]]$parms, 
+                        stat = cbind(sss[[1]]$stats$t, sss[[1]]$stats$tt$Total))
+  mbs <- get_parm_stats(parms = sss[[1]]$parms, 
+                        stat = cbind(sss[[1]]$stats$t, sss[[1]]$stats$tt$Stable))
+  mbd <- get_parm_stats(parms = sss[[1]]$parms, 
+                        stat = cbind(sss[[1]]$stats$t, sss[[1]]$stats$tt$Dynamic))
+  stats_names <- c("speciation_between_A_mean", "speciation_between_B_mean", "speciation_between_C_mean", "speciation_between_D_mean", "speciation_within_A_mean", "speciation_within_B_mean","speciation_within_C_mean", "speciation_within_D_mean")
+  lmbt <- list(mbt[,c("dispersal", "gamma", stats_names)], mbs[,c("dispersal", "gamma",  stats_names)], mbd[,c("dispersal",  "gamma", stats_names)])
+  
+disprange <- patches$disprange
+dispnames <- unlist(lapply(disprange, put_brak))
+n_dispr <- length(disprange)
+## START PLOT  
+set_par(n_dispr,ncols = 3)
+lvals <- list()
+for (disprange_i in 1:n_dispr) {
+      # print(disprange_i)
+  lvals[[disprange_i]] <- lapply(lmbt, function(x) {
+    apply(x[x["dispersal"]>=disprange[[disprange_i]][1]&x["dispersal"]<disprange[[disprange_i]][2],-c(1,2)], 2, function(e){
+      gamma <- x[x["dispersal"]>=disprange[[disprange_i]][1]&x["dispersal"]<disprange[[disprange_i]][2],"gamma"]
+        mean(e*100,na.rm=T)#quantile(e, probs=c(0.05,0.5,0.95))
+      })
+    })
+  dataplot <- unlist(lvals[[disprange_i]])
+  lollipoPlot(dataplot, 
+              col=patches$colors, 
+              pt.col=patches$colors,
+              pch=rep(c(17,16),each=length(patches$names)),
+              xaxt="n",
+              lwd=1,
+              ylim=c(0,7),
+              ylab="Mean speciation per Myr",
+              lty=rep(c(1,2,3), each=c(2*length(patches$names))))
+  text(x=c(1,9,17), y=-0.75, labels=names(sss[[1]]$stats$tt), adj=0)
+  title(paste0("d",dispnames[disprange_i]))
+  title(LETTERS[disprange_i], adj=0)
+  if (disprange_i==2){  
+        legend("top", bty="n", c("between patches", "withing patches"), pch=c(17,16),title="Speciation")
+  }
+  if (disprange_i==1){
+        legend("top", bty="n", LETTERS[1:4], text.col = patches$colors, title="Patch", title.col="black" )
+  }
+  if (disprange_i==3){
+        legend("top", bty="n", names(patches$`time-phase`), lty=c(1:3), title="Time phase")
+  }
+}
+
+```
+
+Investigating spatial dynamics for M0 during 4.5-0Ma ( @fig-space-M0-though_time A-D) shows that mean occupancy increases with dispersal, while changes leave scale signatures and show that proportional change (i.e. $\frac{(increase - decrease)}{total\space occupancy}$). decreases with competition, while neutral models have higher proportional increase/decrease ratio. Moreover, we can see that this signature was stronger during the dynamic stage of this simulations ( @fig-space-M0-though_time I-L).
+
+```{r}
+#| label: fig-space-M0-though_time
+#| fig-height: 6
+#| fig-cap: |
+#|   Spatial dynamics of M0 from 4.5 to 0 Ma (A-D), Stability from 4.5 to 2.5 Ma (E-H), and Dynamism from 2 to 0 Ma (I-L). Figures show the mean occupancy, proportional occupancy, and changes in isolated proportional increase and decrease of the number of occupied sites per species.
+
+# sss[[li]]$stats$tt <- lapply(sss[[li]]$stats$tt, as.data.frame)
+stats <- grep("spatial", names(sss$M0$stats$tt$Total), value = T)
+stats <- grep("mean", stats, value = T)
+stats <- gsub("range_spatial_sps_", "",stats)
+
+for (ir in 1:length(lmbt))
+  # ir <- 1
+
+  mbt <- get_parm_stats(parms = sss[[1]]$parms, 
+                        stat = sss[[1]]$stats$tt$Total)
+  mbs <- get_parm_stats(parms = sss[[1]]$parms, 
+                        stat = sss[[1]]$stats$tt$Stable)
+  mbd <- get_parm_stats(parms = sss[[1]]$parms, 
+                        stat = sss[[1]]$stats$tt$Dynamic)
+  stats_names <- paste0("range_spatial_sps_",stats)
+  lmbt <- list(mbt[,c("dispersal", "competition", stats_names)], mbs[,c("dispersal", "competition",  stats_names)], mbd[,c("dispersal", "competition", stats_names)])
+  names(lmbt) <- names(sss[[1]]$stats$tt)
+  set_par(4*3,4)
+  # ranget <- range(unlist(lapply(lmbt, function(x){x[,-1]})))
+  iab<<-0
+  data <- NULL
+  teste <- lapply(lmbt, function(data){
+    iab<<-iab+1
+    rangeis <- range(data[,-1])
+    rangeis <- range(data[,-1])
+    data$change <- data$`range_spatial_sps_+1_mean`-data$`range_spatial_sps_-1_mean`
+    data$change_prop <- (data$`range_spatial_sps_+1_mean`-data$`range_spatial_sps_-1_mean`)/data$`range_spatial_sps_0_mean`
+    data$mean_range <- data$`range_spatial_sps_+1_mean`+data$`range_spatial_sps_0_mean`-data$`range_spatial_sps_-1_mean`
+
+    data$prop_increase <- data$`range_spatial_sps_+1_mean`/data$`range_spatial_sps_0_mean`
+    data$prop_decrease <- data$`range_spatial_sps_-1_mean`/data$`range_spatial_sps_0_mean`
+    plot_stat_classes(mbt=data, cats = "competition", y="mean_range", x="dispersal", xlab=stats_symbol_lib[["dispersal"]][1], ylab=stats_symbol_lib[["mean_range"]][1],  plt_type =if(iab==1){"colbar"}else{""})
+    title(LETTERS[iab], adj=0)
+    iab <<-iab+1
+    plot_stat_classes(mbt=data, cats = "competition", y="change_prop", ylab=stats_symbol_lib[["change_prop"]][1], x="dispersal", xlab=stats_symbol_lib[["dispersal"]][1], plt_type ="")
+    abline(h=0)
+        title(LETTERS[iab], adj=0)
+    iab <<-iab+1
+    plot_stat_classes(mbt=data, cats = "competition", y="prop_increase", ylab="Increase %", x="dispersal", xlab=stats_symbol_lib[["dispersal"]][1], plt_type ="")
+        title(LETTERS[iab], adj=0)
+    iab <<-iab+1
+    plot_stat_classes(mbt=data, cats = "competition", y="prop_decrease", ylab="Decrease %", x="dispersal", xlab=stats_symbol_lib[["dispersal"]][1], plt_type ="")
+        title(LETTERS[iab], adj=0)
+  })
+
+```
+
+```{r}
+#| label: fig-corrplot-M0-phases
+#| fig-height: 8
+#| fig-cap: |
+#|   Correlations for hand-picked summary statistics for M0 for different intervals of dispersal distance 0.15-0.55 (A) and  0.55-1 (B).
+
+lmodmbt <- lapply(sss, function(x){
+  get_parm_stats(parms = x$parms,
+                 stat = cbind(x$stats$t, x$stats$tt$Total))# cbind(x$stats$t, x$stats$tt$Total)
+})
+# get only sims with at least 10 species
+lmodmbt <- lapply(lmodmbt, function(x){
+  return(x[x$gamma>=10,])
+})
+ns <- unlist(lapply(lmodmbt, nrow))
+
+# remove failed stats with NA everywhere
+lmodmbt <- lapply(lmodmbt, function(x){
+  return(x[,apply(x,2,function(l){all(!is.na(l))})])
+})
+
+cor_stats_namess2 <- c(
+  "dispersal",
+  #"trs_dispersal_50%",
+  "competition",
+  #"trs_dispersal_slope_time",
+  #"trs_spread_dispersal",
+  #"trs_competition_50%",
+  #"trs_competition_slope_time",
+  #"trs_spread_competition",
+  #"trs_temp_width_slope_time",
+  #"trs_spread_temp_width",
+  "speciations_perc",
+  "extinctions_perc",
+  #"turnover",
+  "gamma",
+  "mtx_mean_alpha_T",
+  "mtx_beta_prop_T",
+  "mtx_zeta_T",
+  "mtx_eta_T",
+  #"mtx.PD_S_T",
+  "mtx_MPD_S_T",
+  "mtx_MNTD_S_T"
+  #"range_spatial_sps_+1_mean",
+  #"range_spatial_sps_-1_mean",
+  #"range_spatial_sps_0_mean"
+  #"maxlik_betasplit_.TF"
+  
+)
+# remove finished
+# lmodmbt <- lapply(lmodmbt, function(x){
+#   x <- x[, -grep(c("trs_|_A|_B|_C|_D|mtx.NA"),colnames(x))]
+#   return(x[,!colnames(x)%in%c("seed","finished", "divergence_threshold", "n_sp_alive_t_0", "cpu_time")])
+# })
+
+
+lmodmbt <- lapply(lmodmbt, function(x){
+  change <- x$`range_spatial_sps_+1_mean`-x$`range_spatial_sps_-1_mean`
+  change_prop <- change/x$`range_spatial_sps_0_mean`
+  x <- cbind(x[, cor_stats_namess2],"change_prop"=change_prop)
+})
+
+
+
+
+m0disps <- list()
+ranges <- patches$disprange[-1]
+disp <- lmodmbt[[1]]$dispersal
+for (r_i in 1:length(ranges)){
+  mask <- (disp>ranges[[r_i]][1])&(disp<=ranges[[r_i]][2])
+  m0disps[[r_i]] <- lmodmbt[[1]][mask,]
+}
+emp <- lapply(m0disps, nrow)
+set_par(2,1)
+iab<<-0
+emp <- lapply(m0disps, function(x){
+  iab<<-iab+1
+  M <- cor(x, method="pearson") # get pairwise pearson correlation coefficients 
+p.mat <- cor.mtest(M)
+
+# n_names <- unlist(lapply(stats_symbol_lib[rownames(M)], function(x){x[1]}))
+# 
+# for (i in 1:length(n_names)){
+#   rownames(M)[i] <- eval(n_names[[i]])
+# }
+
+
+
+corrplot(M, method = "square", type =  "upper", diag=FALSE, mar=c(0,0,0.6,0),
+          title="", 
+         #addCoef.col = "black", # Add coefficient of correlation
+         #addCoefasPercent=TRUE,
+         addgrid.col=NA,
+         tl.srt = 45,
+         # Combine with significance
+         # p.mat = p.mat, sig.level = 0.05, insig = "blank" 
+         tl.col="black"
+         # hide correlation coefficient on the principal diagonal
+         ) # 
+title(LETTERS[iab], adj=0)
+title(paste0("M0 ",put_brak(ranges[[iab]])))
+})
+
+```
+
+Inspecting the community distances between all the patches, there is a clear effect of increase in community diversity with patch distance and dispersal ability @fig-sumstats_rest-M0-7 . As expected **\[refs\]**, competition tends to decrease community distance overall where communities reach maximum diversity. The combination of community distances between islands A, B, C, and D is depicted for M0 in @fig-sumstats_rest-M0-8. Each line corresponds to simulations with the same competitive value. Community distance represents the standardized value of the community distance, akin to the beta diversity version of the Mean Pairwise Distance (MPD), which provides the average phylogenetic distance between two communities.
+
+## ME
+
+Figure @fig-space-ME-though_time captures the evolving spatial patterns and occupancy dynamics of species from 4.5 million years ago (Ma) to the present. This visualization portrays a period of stability between 4.5 and 2.5 Ma, followed by a phase of significant change from 2 to 0 Ma, elucidating the evolutionary trajectory of species occupancy over millennia.
+
+Figure @fig-corrplot-ME-phases delves into the intricate correlations between selected summary statistics across various dispersal distance intervals. This analysis sheds light on the complex interplay between dispersal, competition and landscape structure.
+
+Furthermore, @fig-sumstats_1-ME, along with @fig-sumstats_rest-ME-1, @fig-sumstats_rest-ME-2, @fig-sumstats_rest-ME-3, @fig-sumstats_rest-ME-4, @fig-sumstats_rest-ME-5, @fig-sumstats_rest-ME-6, @fig-sumstats_rest-ME-7 and @fig-sumstats_rest-ME-8 present multiple statistical summaries along initial dispersal trait values. The depiction of competition is nuanced, with simulations regimes delineated by unique lines within the same initial competitive grouping, offering a comprehensive overview of the dispersal, competitive and landscape structure behind biodiversity dynamics.
+
+```{r}
+#| label: fig-space-ME-though_time
+#| fig-height: 6
+#| fig-cap: |
+#|   Spatial dynamics of ME from 4.5 to 0 Ma (A-D), Stability from 4.5 to 2.5 Ma (E-H), and Dynamism from 2 to 0 Ma (I-L). Figures show the mean occupancy, proportional occupancy, and changes in isolated proportional increase and decrease of the number of occupied sites per species.
+
+# sss[[li]]$stats$tt <- lapply(sss[[li]]$stats$tt, as.data.frame)
+stats <- grep("spatial", names(sss$M0$stats$tt$Total), value = T)
+stats <- grep("mean", stats, value = T)
+stats <- gsub("range_spatial_sps_", "",stats)
+
+for (ir in 1:length(lmbt))
+  # ir <- 1
+
+  mbt <- get_parm_stats(parms = sss[[2]]$parms, 
+                        stat = sss[[2]]$stats$tt$Total)
+  mbs <- get_parm_stats(parms = sss[[2]]$parms, 
+                        stat = sss[[2]]$stats$tt$Stable)
+  mbd <- get_parm_stats(parms = sss[[2]]$parms, 
+                        stat = sss[[2]]$stats$tt$Dynamic)
+  stats_names <- paste0("range_spatial_sps_",stats)
+  lmbt <- list(mbt[,c("dispersal", "competition", stats_names)], mbs[,c("dispersal", "competition",  stats_names)], mbd[,c("dispersal", "competition", stats_names)])
+  names(lmbt) <- names(sss[[1]]$stats$tt)
+  set_par(4*3,4)
+  # ranget <- range(unlist(lapply(lmbt, function(x){x[,-1]})))
+  iab<<-0
+  data <- NULL
+  teste <- lapply(lmbt, function(data){
+    iab<<-iab+1
+    rangeis <- range(data[,-1])
+    rangeis <- range(data[,-1])
+    data$change <- data$`range_spatial_sps_+1_mean`-data$`range_spatial_sps_-1_mean`
+    data$change_prop <- (data$`range_spatial_sps_+1_mean`-data$`range_spatial_sps_-1_mean`)/data$`range_spatial_sps_0_mean`
+    data$mean_range <- data$`range_spatial_sps_+1_mean`+data$`range_spatial_sps_0_mean`-data$`range_spatial_sps_-1_mean`
+
+    data$prop_increase <- data$`range_spatial_sps_+1_mean`/data$`range_spatial_sps_0_mean`
+    data$prop_decrease <- data$`range_spatial_sps_-1_mean`/data$`range_spatial_sps_0_mean`
+    plot_stat_classes(mbt=data, cats = "competition", y="mean_range", x="dispersal", xlab=stats_symbol_lib[["dispersal"]][1], ylab=stats_symbol_lib[["mean_range"]][1],  plt_type =if(iab==1){"colbar"}else{""})
+    title(LETTERS[iab], adj=0)
+    iab <<-iab+1
+    plot_stat_classes(mbt=data, cats = "competition", y="change_prop", ylab=stats_symbol_lib[["change_prop"]][1], x="dispersal", xlab=stats_symbol_lib[["dispersal"]][1], plt_type ="")
+    abline(h=0)
+        title(LETTERS[iab], adj=0)
+    iab <<-iab+1
+    plot_stat_classes(mbt=data, cats = "competition", y="prop_increase", ylab="Increase %", x="dispersal", xlab=stats_symbol_lib[["dispersal"]][1], plt_type ="")
+        title(LETTERS[iab], adj=0)
+    iab <<-iab+1
+    plot_stat_classes(mbt=data, cats = "competition", y="prop_decrease", ylab="Decrease %", x="dispersal", xlab=stats_symbol_lib[["dispersal"]][1], plt_type ="")
+        title(LETTERS[iab], adj=0)
+  })
+
+```
+
+```{r}
+#| label: fig-corrplot-ME-phases
+#| fig-height: 8
+#| fig-cap: |
+#|   Correlations for hand-picked summary statistics for ME for different intervals of dispersal distance 0.15-0.55 (A) and  0.55-1 (B).
+
+lmodmbt <- lapply(sss, function(x){
+  get_parm_stats(parms = x$parms,
+                 stat = cbind(x$stats$t, x$stats$tt$Total))# cbind(x$stats$t, x$stats$tt$Total)
+})
+# get only sims with at least 10 species
+lmodmbt <- lapply(lmodmbt, function(x){
+  return(x[x$gamma>=10,])
+})
+ns <- unlist(lapply(lmodmbt, nrow))
+
+# remove failed stats with NA everywhere
+lmodmbt <- lapply(lmodmbt, function(x){
+  return(x[,apply(x,2,function(l){all(!is.na(l))})])
+})
+
+cor_stats_namess2 <- c(
+  "dispersal",
+  #"trs_dispersal_50%",
+  "competition",
+  #"trs_dispersal_slope_time",
+  #"trs_spread_dispersal",
+  #"trs_competition_50%",
+  #"trs_competition_slope_time",
+  #"trs_spread_competition",
+  #"trs_temp_width_slope_time",
+  #"trs_spread_temp_width",
+  "speciations_perc",
+  "extinctions_perc",
+  #"turnover",
+  "gamma",
+  "mtx_mean_alpha_T",
+  "mtx_beta_prop_T",
+  "mtx_zeta_T",
+  "mtx_eta_T",
+  #"mtx.PD_S_T",
+  "mtx_MPD_S_T",
+  "mtx_MNTD_S_T"
+  #"range_spatial_sps_+1_mean",
+  #"range_spatial_sps_-1_mean",
+  #"range_spatial_sps_0_mean"
+  #"maxlik_betasplit_.TF"
+  
+)
+
+lmodmbt <- lapply(lmodmbt, function(x){
+  change <- x$`range_spatial_sps_+1_mean`-x$`range_spatial_sps_-1_mean`
+  change_prop <- change/x$`range_spatial_sps_0_mean`
+  x <- cbind(x[, cor_stats_namess2],"change_prop"=change_prop)
+})
+
+
+
+
+m0disps <- list()
+ranges <- patches$disprange[-1]
+disp <- lmodmbt[[2]]$dispersal
+for (r_i in 1:length(ranges)){
+  mask <- (disp>ranges[[r_i]][1])&(disp<=ranges[[r_i]][2])
+  m0disps[[r_i]] <- lmodmbt[[2]][mask,]
+}
+emp <- lapply(m0disps, nrow)
+set_par(2,1)
+iab<<-0
+emp <- lapply(m0disps, function(x){
+  iab<<-iab+1
+  M <- cor(x, method="pearson") # get pairwise pearson correlation coefficients 
+p.mat <- cor.mtest(M)
+
+# n_names <- unlist(lapply(stats_symbol_lib[rownames(M)], function(x){x[1]}))
+# 
+# for (i in 1:length(n_names)){
+#   rownames(M)[i] <- eval(n_names[[i]])
+# }
+
+
+
+corrplot(M, method = "square", type =  "upper", diag=FALSE, mar=c(0,0,0.6,0),
+          title="", 
+         #addCoef.col = "black", # Add coefficient of correlation
+         #addCoefasPercent=TRUE,
+         addgrid.col=NA,
+         tl.srt = 45,
+         # Combine with significance
+         # p.mat = p.mat, sig.level = 0.05, insig = "blank" 
+         tl.col="black"
+         # hide correlation coefficient on the principal diagonal
+         ) # 
+title(LETTERS[iab], adj=0)
+title(paste0("ME ",put_brak(ranges[[iab]])))
+})
+
+```
+
+```{r}
+#| label: fig-sumstats_1-ME
+#| fig-height: 6
+#| fig-cap: !expr paste("Summary statistics for ME though dispersal. Each line corresponds to simulation within a same competitive value along dispersal ability at the initial timestep.", paste(paste0("(",LETTERS[1:length(main_stats_names)], ") ", unlist(lapply(stats_symbol_lib[main_stats_names[x]], function(x2){x2[2]})), collapse=" ")))
+
+mbt <- get_parm_stats(parms = sss[[2]]$parms, stat = sss[[2]]$stats$t)
+main_stats_names <- c("gamma", "mtx_beta_prop_T","mtx_mean_alpha_T", "mtx_zeta_T","mtx_eta_T","maxlik_betasplit_TF","speciations_perc", "extinctions_perc", "mtx_MPD_S_T", "mtx_MNTD_S_T")#
+plot_stat_classes_summary(mbt, main_stats_names)
+```
+
+```{r}
+# prepare additional summary stats plots
+
+plot_name <- "Additional summary statistics for ME though initial dispersal values. Each line corresponds to simulations within a same competitive value, along dispersal ability."
+
+additional_stats <- list(8:15, 16:24, 25:33, 39:47, 48:57, 78:84, 85:93, 94:101)
+
+lables_fig_add <- unlist(lapply(additional_stats, function(x){
+  val <- paste(plot_name, paste(paste0("(",LETTERS[1:length(x)], ") ", unlist(lapply(stats_symbol_lib[
+    colnames(mbt)[!colnames(mbt)%in%main_stats_names][x]
+    ], function(x2){x2[2]})), collapse=" ")))
+  return(val)
+}))
+
+```
+
+```{r}
+#| label: fig-sumstats_rest-ME
+#| fig-height: 6
+#| fig-cap: !expr lables_fig_add
+#|   
+
+for (add_i in 1:length(additional_stats)){
+  s_veci <- additional_stats[[add_i]]
+  plot_stat_classes_summary(mbt, colnames(mbt)[!colnames(mbt)%in%main_stats_names][s_veci])
+}
+
+```
+
+## MET
+
+Figure @fig-space-MET-though_time captures the evolving spatial patterns and occupancy dynamics of species from 4.5 million years ago (Ma) to the present. This visualization portrays a period of stability between 4.5 and 2.5 Ma, followed by a phase of significant change from 2 to 0 Ma, elucidating the evolutionary trajectory of species occupancy over millennia.
+
+Figure @fig-corrplot-MET-phases delves into the intricate correlations between selected summary statistics across various dispersal distance intervals. This analysis sheds light on the complex interplay between dispersal, competition, and landscape in molding the geographical distribution of species.
+
+Furthermore, @fig-sumstats_1-MET, along with @fig-sumstats_rest-MET-1, @fig-sumstats_rest-MET-2, @fig-sumstats_rest-MET-3, @fig-sumstats_rest-MET-4, @fig-sumstats_rest-MET-5, @fig-sumstats_rest-MET-6, @fig-sumstats_rest-MET-7 and @fig-sumstats_rest-MET-8 present multiple statistical summaries along initial dispersal trait values. The depiction of competition is nuanced, with simulations regimes delineated by unique lines within the same initial competitive grouping, offering a comprehensive overview of the dispersal, competitive and landscape structure behind biodiversity dynamics.
+
+```{r}
+#| label: fig-space-MET-though_time
+#| fig-height: 6
+#| fig-cap: |
+#|   Spatial dynamics of MET from 4.5 to 0 Ma (A-D), Stability from 4.5 to 2.5 Ma (E-H), and Dynamism from 2 to 0 Ma (I-L). Figures show the mean occupancy, proportional occupancy, and changes in isolated proportional increase and decrease of the number of occupied sites per species.
+
+# sss[[li]]$stats$tt <- lapply(sss[[li]]$stats$tt, as.data.frame)
+stats <- grep("spatial", names(sss$M0$stats$tt$Total), value = T)
+stats <- grep("mean", stats, value = T)
+stats <- gsub("range_spatial_sps_", "",stats)
+
+for (ir in 1:length(lmbt))
+  # ir <- 1
+
+  mbt <- get_parm_stats(parms = sss[[3]]$parms, 
+                        stat = sss[[3]]$stats$tt$Total)
+  mbs <- get_parm_stats(parms = sss[[3]]$parms, 
+                        stat = sss[[3]]$stats$tt$Stable)
+  mbd <- get_parm_stats(parms = sss[[3]]$parms, 
+                        stat = sss[[3]]$stats$tt$Dynamic)
+  stats_names <- paste0("range_spatial_sps_",stats)
+  lmbt <- list(mbt[,c("dispersal", "competition", stats_names)], mbs[,c("dispersal", "competition",  stats_names)], mbd[,c("dispersal", "competition", stats_names)])
+  names(lmbt) <- names(sss[[1]]$stats$tt)
+  set_par(4*3,4)
+  # ranget <- range(unlist(lapply(lmbt, function(x){x[,-1]})))
+  iab<<-0
+  data <- NULL
+  teste <- lapply(lmbt, function(data){
+    iab<<-iab+1
+    rangeis <- range(data[,-1])
+    rangeis <- range(data[,-1])
+    data$change <- data$`range_spatial_sps_+1_mean`-data$`range_spatial_sps_-1_mean`
+    data$change_prop <- (data$`range_spatial_sps_+1_mean`-data$`range_spatial_sps_-1_mean`)/data$`range_spatial_sps_0_mean`
+    data$mean_range <- data$`range_spatial_sps_+1_mean`+data$`range_spatial_sps_0_mean`-data$`range_spatial_sps_-1_mean`
+
+    data$prop_increase <- data$`range_spatial_sps_+1_mean`/data$`range_spatial_sps_0_mean`
+    data$prop_decrease <- data$`range_spatial_sps_-1_mean`/data$`range_spatial_sps_0_mean`
+    plot_stat_classes(mbt=data, cats = "competition", y="mean_range", x="dispersal", ylab=stats_symbol_lib[["mean_range"]][1], xlab=stats_symbol_lib[["dispersal"]][1], plt_type =if(iab==1){"colbar"}else{""})
+    title(LETTERS[iab], adj=0)
+    iab <<-iab+1
+    plot_stat_classes(mbt=data, cats = "competition", y="change_prop", ylab=stats_symbol_lib[["change_prop"]][1], x="dispersal", xlab=stats_symbol_lib[["dispersal"]][1], plt_type ="")
+    abline(h=0)
+        title(LETTERS[iab], adj=0)
+    iab <<-iab+1
+    plot_stat_classes(mbt=data, cats = "competition", y="prop_increase", ylab="Increase %", x="dispersal", xlab=stats_symbol_lib[["dispersal"]][1], plt_type ="")
+        title(LETTERS[iab], adj=0)
+    iab <<-iab+1
+    plot_stat_classes(mbt=data, cats = "competition", y="prop_decrease", ylab="Decrease %", x="dispersal", xlab=stats_symbol_lib[["dispersal"]][1], plt_type ="")
+        title(LETTERS[iab], adj=0)
+  })
+
+```
+
+```{r}
+#| label: fig-corrplot-MET-phases
+#| fig-height: 8
+#| fig-cap: |
+#|   Correlations for hand-picked summary statistics for MET for different intervals of dispersal distance 0.15-0.55 (A) and  0.55-1 (B).
+
+lmodmbt <- lapply(sss, function(x){
+  get_parm_stats(parms = x$parms,
+                 stat = cbind(x$stats$t, x$stats$tt$Total))# cbind(x$stats$t, x$stats$tt$Total)
+})
+# get only sims with at least 10 species
+lmodmbt <- lapply(lmodmbt, function(x){
+  return(x[x$gamma>=10,])
+})
+ns <- unlist(lapply(lmodmbt, nrow))
+
+# remove failed stats with NA everywhere
+lmodmbt <- lapply(lmodmbt, function(x){
+  return(x[,apply(x,2,function(l){all(!is.na(l))})])
+})
+
+cor_stats_namess2 <- c(
+  "dispersal",
+  #"trs_dispersal_50%",
+  "competition",
+  #"trs_dispersal_slope_time",
+  #"trs_spread_dispersal",
+  #"trs_competition_50%",
+  #"trs_competition_slope_time",
+  #"trs_spread_competition",
+  #"trs_temp_width_slope_time",
+  #"trs_spread_temp_width",
+  "speciations_perc",
+  "extinctions_perc",
+  #"turnover",
+  "gamma",
+  "mtx_mean_alpha_T",
+  "mtx_beta_prop_T",
+  "mtx_zeta_T",
+  "mtx_eta_T",
+  #"mtx.PD_S_T",
+  "mtx_MPD_S_T",
+  "mtx_MNTD_S_T"
+  #"range_spatial_sps_+1_mean",
+  #"range_spatial_sps_-1_mean",
+  #"range_spatial_sps_0_mean"
+  #"maxlik_betasplit_.TF"
+  
+)
+
+lmodmbt <- lapply(lmodmbt, function(x){
+  change <- x$`range_spatial_sps_+1_mean`-x$`range_spatial_sps_-1_mean`
+  change_prop <- change/x$`range_spatial_sps_0_mean`
+  x <- cbind(x[, cor_stats_namess2],"change_prop"=change_prop)
+})
+
+
+
+
+m0disps <- list()
+ranges <- patches$disprange[-1]
+disp <- lmodmbt[[3]]$dispersal
+for (r_i in 1:length(ranges)){
+  mask <- (disp>ranges[[r_i]][1])&(disp<=ranges[[r_i]][2])
+  m0disps[[r_i]] <- lmodmbt[[3]][mask,]
+}
+emp <- lapply(m0disps, nrow)
+set_par(2,1)
+iab<<-0
+emp <- lapply(m0disps, function(x){
+  iab<<-iab+1
+  M <- cor(x, method="pearson") # get pairwise pearson correlation coefficients 
+p.mat <- cor.mtest(M)
+
+# n_names <- unlist(lapply(stats_symbol_lib[rownames(M)], function(x){x[1]}))
+# 
+# for (i in 1:length(n_names)){
+#   rownames(M)[i] <- eval(n_names[[i]])
+# }
+
+
+
+corrplot(M, method = "square", type =  "upper", diag=FALSE, mar=c(0,0,0.6,0),
+          title="", 
+         #addCoef.col = "black", # Add coefficient of correlation
+         #addCoefasPercent=TRUE,
+         addgrid.col=NA,
+         tl.srt = 45,
+         # Combine with significance
+         # p.mat = p.mat, sig.level = 0.05, insig = "blank" 
+         tl.col="black"
+         # hide correlation coefficient on the principal diagonal
+         ) # 
+title(LETTERS[iab], adj=0)
+title(paste0("MET ",put_brak(ranges[[iab]])))
+})
+
+```
+
+```{r}
+#| label: fig-sumstats_1-MET
+#| fig-height: 6
+#| fig-cap: !expr paste("Summary statistics for ME though dispersal. Each line corresponds to simulation within a same competitive value along dispersal ability at the initial timestep.", paste(paste0("(",LETTERS[1:length(main_stats_names)], ") ", unlist(lapply(stats_symbol_lib[main_stats_names[x]], function(x2){x2[2]})), collapse=" ")))
+
+mbt <- get_parm_stats(parms = sss[[3]]$parms, stat = sss[[3]]$stats$t)
+main_stats_names <- c("gamma", "mtx_beta_prop_T","mtx_mean_alpha_T", "mtx_zeta_T","mtx_eta_T","maxlik_betasplit_TF","speciations_perc", "extinctions_perc", "mtx_MPD_S_T", "mtx_MNTD_S_T")#
+plot_stat_classes_summary(mbt, main_stats_names)
+```
+
+```{r}
+# prepare additional summary stats plots
+
+plot_name <- "Additional summary statistics for MET though initial dispersal values. Each line corresponds to simulations within a same competitive value, along dispersal ability."
+
+additional_stats <- list(8:15, 16:24, 25:33, 39:47, 48:57, 78:84, 85:93, 94:101)
+
+lables_fig_add <- unlist(lapply(additional_stats, function(x){
+  val <- paste(plot_name, paste(paste0("(",LETTERS[1:length(x)], ") ", unlist(lapply(stats_symbol_lib[
+    colnames(mbt)[!colnames(mbt)%in%main_stats_names][x]
+    ], function(x2){x2[2]})), collapse=" ")))
+  return(val)
+}))
+
+```
+
+```{r}
+#| label: fig-sumstats_rest-MET
+#| fig-height: 6
+#| fig-cap: !expr lables_fig_add
+#|   
+
+for (add_i in 1:length(additional_stats)){
+  s_veci <- additional_stats[[add_i]]
+  plot_stat_classes_summary(mbt, colnames(mbt)[!colnames(mbt)%in%main_stats_names][s_veci])
+}
+
+```
+
+## Models Comparison
+
+The correlation coefficients between the summary statistics and the mean final trait values for each model (M0, ME, MET) show how traits and species numbers are interrelated and vary across models ( @fig-corrplot-all-models ). M0 Model had a positive correlation (0.35) between final richness $\gamma$ and dispersal, indicating that an increase in dispersal trait values is associated with a higher number of species. The number of species and thermal range trait ($\omega$) had negative correlation (-0.56), suggesting that wider temperature tolerance is associated with a lower number of species. ME Model had number of species and dispersal similarly correlated as to M0, a positive correlation (0.40) is observed, reinforcing the idea that higher dispersal capabilities are beneficial for species richness. Number of Species and thermal range: Again, a negative correlation (-0.43) is found, consistent with the M0 model's findings. Number of Species and Dispersal in MET Model shows a stronger positive correlation (0.56) compared to M0 and ME, indicating the assumed trade-off. The number of species and thermal range shows a very strong negative correlation (-0.74), suggesting that in the MET model, the impact of temperature tolerance on species numbers is even more significant.
+
+```{r}
+#| label: fig-corrplot-all-models
+#| fig-height: 8
+#| fig-cap: |
+#|   Correlations for hand-picked summary statistics for M0 (A); ME (B) and MET (C).
+
+lmodmbt <- lapply(sss, function(x){
+  get_parm_stats(parms = x$parms,
+                 stat = cbind(x$stats$t, x$stats$tt$Total))# cbind(x$stats$t, x$stats$tt$Total)
+})
+# get only sims with at least 10 species
+lmodmbt <- lapply(lmodmbt, function(x){
+  return(x[x$gamma>=10,])
+})
+ns <- unlist(lapply(lmodmbt, nrow))
+
+# remove failed stats with NA everywhere
+lmodmbt <- lapply(lmodmbt, function(x){
+  return(x[,apply(x,2,function(l){all(!is.na(l))})])
+})
+
+cor_stats_namess2 <- c(
+  "dispersal",
+  #"trs_dispersal_50%",
+  "competition",
+  "trs_dispersal_slope_time",
+  #"trs_spread_dispersal",
+  #"trs_competition_50%",
+  "trs_competition_slope_time",
+  #"trs_spread_competition",
+  "trs_temp_width_slope_time",
+  #"trs_spread_temp_width",
+  "speciations_perc",
+  "extinctions_perc",
+  #"turnover",
+  "gamma",
+  "mtx_mean_alpha_T",
+  "mtx_beta_prop_T",
+  "mtx_zeta_T",
+  "mtx_eta_T",
+  #"mtx.PD_S_T",
+  "mtx_MPD_S_T",
+  "mtx_MNTD_S_T"
+  #"range_spatial_sps_+1_mean",
+  #"range_spatial_sps_-1_mean",
+  #"range_spatial_sps_0_mean"
+  #"maxlik_betasplit_.TF"
+  )
+# remove finished
+# lmodmbt <- lapply(lmodmbt, function(x){
+#   x <- x[, -grep(c("trs_|_A|_B|_C|_D|mtx.NA"),colnames(x))]
+#   return(x[,!colnames(x)%in%c("seed","finished", "divergence_threshold", "n_sp_alive_t_0", "cpu_time")])
+# })
+lmodmbt <- lapply(lmodmbt, function(x){
+  change <- x$`range_spatial_sps_+1_mean`-x$`range_spatial_sps_-1_mean`
+  change_prop <- change/x$`range_spatial_sps_0_mean`
+  x <- cbind(x[, cor_stats_namess2],"change_prop"=change_prop)
+})
+
+
+set_par(3,1)
+iab<<-0
+emp <- lapply(lmodmbt, function(x){
+  iab<<-iab+1
+  M <- cor(x, method="pearson") # get pairwise pearson correlation coefficients 
+p.mat <- cor.mtest(M)
+corrplot(M, method = "square", type =  "upper", diag=FALSE, mar=c(0,0,0.6,0),
+          title="", 
+         #addCoef.col = "black", # Add coefficient of correlation
+         #addCoefasPercent=TRUE,
+         addgrid.col=NA,
+         tl.srt = 45,
+         # Combine with significance
+         # p.mat = p.mat, sig.level = 0.05, insig = "blank" 
+         tl.col="black"
+         # hide correlation coefficient on the principal diagonal
+         ) # 
+title(LETTERS[iab], adj=0)
+title(names(lmodmbt)[iab])
+})
+
+```
+
+```{r}
+#| label: fig-model-comp-stats
+#| fig-height: 8
+#| fig-cap: |
+#|   Comparison of M0, ME and MET for 8 summary statistics. Dispersal x axis plot the mean dispersal trait at the end of the simulation, rather than the initial dispersal parameter d. The same applies for the competition values that color the points 
+lt <- lapply(sss, function(x){
+  get_parm_stats(parms = x$parms,
+                 stat = x$stats$t)# cbind(x$stats$t, x$stats$tt$Total)
+})
+
+# stats <- grep("_T", names(sss$M0$stats$t), value = T)
+stats <- main_stats_names[-c(4,5)]
+
+set_par(length(stats)*length(lt),length(lt))
+ita <<- 0
+# lapply(lt, function(x){
+# hist(x$trs_spread_temp_width)
+# })
+for (stats_i in 1:length(stats)){
+  
+  ylimt <- range(unlist(lapply(lt, function(x){x[[stats[stats_i]]]})), na.rm=T)
+  xlimt <- range(unlist(lapply(lt, function(x){x[["trs_dispersal_50%"]]})), na.rm=T)
+  
+lapply(lt, function(x){
+  ita <<-ita+1
+  
+# plot(x$`trs_dispersal_50%`,x[[stats[stats_i]]], xlab="dispersal", ylab=stats[stats_i], cex=0.7, xlim=c(0,1), ylim=ylimt)
+
+  y_n <- stats[stats_i]
+  x_n <- "trs_dispersal_50%"
+  plot_stat_classes_p(x, 
+                      y=y_n, 
+                      x=x_n, 
+                      cats="trs_competition_50%", 
+                      ylim=ylimt, 
+                      xlim=xlimt,  
+                      ylab=stats_symbol_lib[y_n][[1]][1],
+                      xlab=stats_symbol_lib[x_n][[1]],
+                      plt_type=if(ita==1){"colbar"}else{"NULL"}, 
+                      yposbar = mean(ylimt))
+
+title(LETTERS[ita], adj=0)
+if(ita<=length(lt)){
+  title(names(sss)[ita])
+}
+})
+
+}
+```
+
+## Trait Changes
+
+@fig-final-traits-change-location-M0MEMET illustrates the variations in trait changes for the models M0, ME, and MET across different ecological parameters: dispersal, tolerance to other species, thermal range, and thermal optimum. Each model's (i.e. columns) shows the slope of trait change between the initial and final timesteps, offering insights into how these traits evolve over time under different conditions and assumptions. The use of color gradients conveys the intensity of competition affecting these traits, with warmer colors indicating higher levels of competition. This visualization underscores the complex interplay between competition and trait adaptability in ecological models, highlighting how traits like dispersal capacity and temperature tolerance shift in response to environmental pressures and species interactions.
+
+@fig-final-traits-by-diversity presents the final gamma richness in relation to various mean parameter values at the final timestep, including thermal range, dispersal, and heterospecific interaction coefficient, across the models M0, ME, and MET. The columns for each model demonstrate the impact of these parameters on biodiversity, utilizing color gradients to represent the strength of competition and dispersal. The analysis of these relationships stresses the critical roles that temperature tolerance, dispersal capabilities, and interactions with other species play in shaping community richness and diversity.
+
+@fig-slopes-trait_change depicts the final gamma richness plotted against the mean trait changes, illustrating the slope between initial and final trait values for all species within the models M0, ME, and MET. It examines traits such as thermal range, dispersal, and heterospecific interaction coefficient, segmented by each model in separate columns. Two color gradients are used for the strength of competition and dispersal. This visualization effectively showcases the linkage between trait adaptability and community richness, emphasizing the importance of assumptions to evolutionary responses to environmental and interspecific pressures in determining ecological outcomes.
+
+```{r}
+#| label: fig-final-traits-change-location-M0MEMET
+#| fig-height: 6
+#| fig-cap: |
+#|   Slopes of trait change for M0, ME and MET (columns) between initial and final timestep, i.e. dispersal (A-C), tolerance to other species (D-F), thermal range (G-I), thermal optimum (J-L). The warmer the collor the higer the competition.
+
+stats <- grep("_slope_time", names(sss$M0$stats$tt$Total), value = T)
+#stats <- grep("mean", stats, value = T)
+# stats <- gsub("range_spatial_sps_", "",stats)
+
+lmodmbt <- lapply(sss, function(x){
+  get_parm_stats(parms = x$parms,
+                 stat = cbind(x$stats$t, x$stats$tt$Total))
+})
+
+set_par(length(stats)*length(lt),length(lt))
+ita <<- 0
+# lapply(lt, function(x){
+# hist(x$trs_spread_temp_width)
+# })
+for (stats_i in 1:length(stats)){
+  ylimt <- range(unlist(lapply(lmodmbt, function(x){x[[stats[stats_i]]]})), na.rm=T)
+  xlimt <- c(0,1) #range(unlist(lapply(lmodmbt, function(x){x[["dispersal%"]]})), na.rm=T)
+lapply(lmodmbt, function(x){
+  ita <<-ita+1
+# plot(x$`trs_dispersal_50%`,x[[stats[stats_i]]], xlab="dispersal", ylab=stats[stats_i], cex=0.7, xlim=c(0,1), ylim=ylimt)
+  y_n <- stats[stats_i]
+  x_n <- "dispersal"
+  plot_stat_classes_p(x, 
+                      y=y_n, 
+                      x=x_n, 
+                      cats="trs_competition_50%", 
+                      ylim=ylimt, 
+                      xlim=xlimt,  
+                      ylab=stats_symbol_lib[y_n][[1]][1],
+                      xlab=stats_symbol_lib[x_n][[1]][1],
+                      plt_type=if(ita==1){"colbar"}else{"NULL"}, 
+                      yposbar = mean(ylimt))
+abline(h=0)
+title(LETTERS[ita], adj=0)
+if(ita<=length(lt)){
+  title(names(sss)[ita])
+}
+})
+}
+```
+
+```{r}
+#| label: fig-final-traits-by-diversity
+#| fig-height: 6
+#| fig-cap: Final gamma richness at final timestep against different final mean parameter values (i.e. thermal range A-C, Dispersal D-F, Heterospecific interaction coeficient G-I) for Models MO, ME and MET on each collumn. Two color gradients are used, one for the strength of competition (A-F) and the other for the strength of dispersal (G-I).
+
+
+fsts <- lapply(sss, function(x){
+  get_parm_stats(parms = x$parms,
+                 stat = cbind(x$stats$tt$Total, x$stats$t))
+})
+
+fsts <- lapply(fsts, function(x){
+  x$a_ff <- 1-x$`trs_competition_50%`
+  return(x)
+})
+
+set_par(3*3,3)
+ita <- 0
+
+for (i in 1:3){
+  ita <- ita+1
+  plot_stat_classes_p(mbt = fsts[[i]], cats = "trs_competition_50%", y = "n_sp_alive_t_0", x="trs_temp_width_50%" , xlim = c(0,0.4), ylim=c(0, 500), xlab=expression("Mean"~omega~'at final timestep'), ylab=expression(gamma~"at final timestep"), plt_type=if(i==1){"colbar"}else{FALSE})
+  title(LETTERS[ita], adj=0)
+  title(names(fsts)[ita])
+}
+for (i in 1:3){
+  ita <- ita+1
+  plot_stat_classes_p(mbt = fsts[[i]], cats = "trs_competition_50%", y = "n_sp_alive_t_0", x="trs_dispersal_50%" , xlim = c(0,1),ylim=c(0, 500),  plt_type ="no", xlab=expression("mean"~"d"~'at final timestep'), ylab=expression(gamma~"at final timestep"))
+  title(LETTERS[ita], adj=0)
+}
+for (i in 1:3){
+  ita <- ita+1
+  plot_stat_classes_p(mbt = fsts[[i]], cats = "trs_dispersal_50%", y = "n_sp_alive_t_0", x="a_ff" , xlim = c(0,0.1), ylim=c(0, 500),  xlab=expression("mean"~alpha[ff]~'at final timestep'), ylab=expression(gamma~"at final timestep"), mycols=patches$dispersal_color, labcust = list("dispersal (d)", "low \nd=0", "high \nd=1"), plt_type=if(i==1){"colbar"}else{FALSE})
+  title(LETTERS[ita], adj=0)
+}
+
+```
+
+```{r}
+#| label: fig-slopes-trait_change
+#| fig-height: 6
+#| fig-cap: Final gamma richness at the last timestep plotted against the mean trait changes, which represent the slope between the initial and final trait values for all species. The mean trait is shown for thermal range A-C, dispersal D-F, and heterospecific interaction coefficient G-I for Models MO, ME, and MET in each column. Two color gradients are used, one for the strength of competition (A-F) and the other for the strength of dispersal (G-I).
+
+set_par(3*3,3)
+range_slope <- c(-0.00035, +0.00035)
+ita <- 0
+for (i in 1:3){
+  ita <- ita+1
+  plot_stat_classes_p(mbt = fsts[[i]], cats = "trs_competition_50%", y = "n_sp_alive_t_0", x="trs_temp_width_slope_time", ylim=c(0, 500),  plt_type=if(i==1){"colbar"}else{FALSE}, xlab=expression("mean"~omega~'change'), ylab=expression(gamma~"at final timestep"))
+  title(names(fsts)[ita])
+   title(LETTERS[ita], adj=0)
+}
+for (i in 1:3){
+  ita <- ita+1
+  plot_stat_classes_p(mbt = fsts[[i]], cats = "trs_competition_50%", y = "n_sp_alive_t_0", x="trs_dispersal_slope_time", xlim = range_slope,ylim=c(0, 500),  plt_type ="no", xlab="Mean d change", ylab=expression(gamma~"at final timestep"))
+  abline(v=0)
+   title(LETTERS[ita], adj=0)
+}
+for (i in 1:3){
+  ita <- ita+1
+  plot_stat_classes_p(mbt = fsts[[i]], cats = "trs_competition_50%", y = "n_sp_alive_t_0", x="trs_competition_slope_time",xlim = range_slope/3, ylim=c(0, 500),   xlab="Mean l change", ylab=expression(gamma~"at final timestep"), mycols=patches$dispersal_color, labcust = list("dispersal (d)", "low \nd=0", "high \nd=1"), plt_type=if(i==1){"colbar"}else{FALSE})
+  abline(v=0)
+   title(LETTERS[ita], adj=0)
+}
+
+```
+
+## Further analysis
+
+Additional, we explore the intricate dynamics of species interaction and environmental adaptation through a series of figures. Figure @fig-final-traits-XXXXX showcases the final mean dispersal trait ($d$), plotted against final the mean competitive trait ($l$) (i.e. tolerance to other species), thermal optimum ($T$), and thermal range ($\omega$) across Models MO, ME, and MET (@fig-final-traits-XXXXX Figure A-I). Further expanding on ecological theories, Figure @fig-testing-of-limiting-similarity delves into the theory of limiting similarity, illustrating how signals for species diversity impacting average population sizes through competitive exclusion. Lastly, Figure @fig-testing-comp-speciation-dispersal juxtaposes speciation versus extinction percentages with temporal stability in macroevolutionary events. This figure not only highlights the impact of interspecific competition on biodiversity outcomes but also shows temporal invariability fo the macroevolutionary processes (@fig-testing-comp-speciation-dispersal D-F).
+
+```{r}
+#| label: fig-final-traits-XXXXX
+#| fig-height: 6
+#| fig-cap: |
+#|   Final mean traits at last timestep are plotted against the mean trait changes. The mean trait is shown for tolerance to other species A-C, thermal optimum D-F, and thermal range G-I for Models MO, ME, and MET in each column.
+lt <- lapply(sss, function(x){
+  get_parm_stats(parms = x$parms,
+                 stat = x$stats$t)# cbind(x$stats$t, x$stats$tt$Total)
+})
+
+lt <- lapply(lt, function(x){
+  x <- x[x$gamma>9,]
+})
+
+stats <- grep("^trs.+50%$", names(sss$M0$stats$t), value = T)
+#stats <- grep("mean", stats, value = T)
+# stats <- gsub("range_spatial_sps_", "",stats)
+
+stats_i <- c(4,2,3) # order of plot
+
+set_par(length(stats_i)*length(lt),length(stats_i))
+ita <<- 0
+# lapply(lt, function(x){
+# hist(x$trs_spread_temp_width)
+# })
+for (indexi in 1:length(stats_i)){
+  
+  ylimt <- range(unlist(lapply(lt, function(x){x[[stats[stats_i[indexi]]]]})))
+  
+lapply(lt, function(x){
+  ita <<-ita+1
+plot(x[[stats[1]]],x[[stats[stats_i[indexi]]]], xlab=stats_symbol_lib[stats[1]][[1]][1], ylab=stats_symbol_lib[stats[stats_i[indexi]]][[1]][1], cex=0.5, xlim=c(0,1), ylim=ylimt)
+title(LETTERS[ita], adj=0)
+if(ita<=length(lt)){
+  title(names(sss)[ita])
+}
+})
+
+}
+```
+
+```{r}
+#| label: fig-testing-of-limiting-similarity
+#| fig-height: 3.5
+#| fig-cap:  The theory of limiting similarity predicts that as species diversity increases, the average occupation decreases due to the need for coexisting species to be sufficiently different to coexist, resulting in lower occupation, as well as population sizes, when higher competition is present.
+
+lt <- lapply(sss, function(x){
+  get_parm_stats(parms = x$parms,
+                 stat = cbind(x$stats$t, x$stats$tt$Total))# cbind(x$stats$t, x$stats$tt$Total)
+})
+
+lt <- lapply(lt, function(x){
+  x <- x[x$gamma>3,]
+})
+
+y_n <- "gamma"
+x_n <- "range_spatial_sps_0_mean"
+c_n <- "trs_competition_50%"
+yliml <- range(unlist(lapply(lt, function(x){x[y_n]})), na.rm=T)
+xliml <- range(unlist(lapply(lt, function(x){x[x_n]})), na.rm=T)
+set_par(length(lt),length(lt))
+ita <<-0
+emp <- lapply(lt, function(x){
+  ita <<-ita+1
+  plot_stat_classes_p(x, y=y_n, x=x_n, cats=c_n, ylim=yliml, xlim=xliml,  ylab=stats_symbol_lib[[y_n]][[1]],
+                      xlab=stats_symbol_lib[["mean_range"]][[1]],
+                      plt_type=if(ita==length(lt)){"colbar"}else{"NULL"}, yposbar = 0.9*yliml[2])
+  title(names(lt)[ita])
+  title(LETTERS[ita], adj=0)
+})
+```
+
+```{r}
+#| label: fig-testing-comp-speciation-dispersal
+#| fig-height: 6
+#| fig-cap: Speciation versus extinction percentage (A-C) and temporal invariability (i.e. temporal stability of macroevolutionary  events) (D-F). Circles size are relative to mean dispersal trait at the final timestep. MET was the only model that show increased interspecific competition enhancing extinction and speciation.
+
+lt <- lapply(sss, function(x){
+  get_parm_stats(parms = x$parms,
+                 stat = cbind(x$stats$t, x$stats$tt$Total))# cbind(x$stats$t, x$stats$tt$Total)
+})
+
+lt <- lapply(lt, function(x){
+  x <- x[x$gamma>=20,]
+})
+
+set_par(length(lt)*2,length(lt))
+
+
+
+
+y_n <- "speciations_perc"
+x_n <- "extinctions_perc"
+c_n <- "trs_competition_50%"
+yliml <- range(unlist(lapply(lt, function(x){x[y_n]})), na.rm=T)
+#yliml[1] <- 0.85
+xliml <- range(unlist(lapply(lt, function(x){x[x_n]})), na.rm=T)
+#yliml <- range(c(yliml, xliml))
+#xliml <- yliml
+#yliml[1] <- 0.8
+ita <<-0
+emp <- lapply(lt, function(x){
+  ita <<-ita+1
+  plot_stat_classes_p(x, y=y_n, x=x_n, cats=c_n, ylim=yliml, xlim=xliml,  ylab=stats_symbol_lib[y_n][[1]][1], xlab=stats_symbol_lib[x_n][[1]][1], 
+                      cex_p=0.5+x$`trs_dispersal_50%`,
+                      pch_p=1,
+                      plt_type=if(ita==1){"colbar"}else{"NULL"}, yposbar = mean(yliml))
+  title(names(lt)[ita])
+  title(LETTERS[ita], adj=0)
+  abline(h=1)
+  abline
+})
+y_n <- "speciations_invar"
+x_n <- "extinction_invar"
+c_n <- "trs_competition_50%"
+yliml <- range(unlist(lapply(lt, function(x){x[y_n]})), na.rm=T)
+xliml <- range(unlist(lapply(lt, function(x){x[x_n]})), na.rm=T)
+
+emp <- lapply(lt, function(x){
+  ita <<-ita+1
+  plot_stat_classes_p(x, y=y_n, x=x_n, cats=c_n, ylim=yliml, xlim=xliml,  ylab=y_n, 
+                      cex_p=x$`trs_dispersal_50%`,
+                      pch_p=1,
+                      xlab=x_n,
+                      plt_type=if(ita==length(lt)){"colbar"}else{"NULL"}, yposbar = 0.9*yliml[2])
+  title(names(lt)[ita])
+  title(LETTERS[ita], adj=0)
+})
+```
+
+## Handpicked simulation
+
+Examining a single simulation, specifically how trait changed though time for each species enables us to closely investigate the implemented processes in action (@fig-single_sim_M0_ME_MET_traits_phylo). We select a simulation with initial *l*=9.56 and *d*=0.367, thus sampling initial value of *l* that leads to moderate competition and within connectivity regime $\kappa_1$. Moreover, in all simulations island C remained occupied by only one species, serving as a control on biodiversity while island D is never occupied (@fig-single_sim_M0MEMET_space_time). As implemented, *l* and *d* did not change though time for M0 (@fig-single_sim_M0_ME_MET_traits_phylo I,M). Note single black isolated line that corresponds to single species in island C (@fig-single_sim_M0_ME_MET_traits_phylo E,F,G,J,K,O).
+
+All models exhibit rapid niche specialization around 1 Ma, characterized by a decrease in ω and the expansion of T. The inclusion of trait evolution (i.e. ME and MET) illustrates the swift evolution of tolerance to other species' traits (l) in the presence of other species. Note isolated species in island C, with clearly lower final *l* than species present in islands A and B (@fig-single_sim_M0_ME_MET_traits_phylo J,K). However, this tolerance is less pronounced when a trade-off exists between *d* and *l*. Furthermore, the ME and MET simulations reveal a less abrupt decrease in niche width, though thermal range, compared to M0, as the latter only allows for species to escape competition in this form (i.e. no *l* or d evolution). In MET simulations, the trade-off deviates *d* evolution from a more neutral case, i.e. ME. Spatial patterns diverge among the models, with biodiversity hotspots shifting towards the center of the island - at this specific simulation (@fig-single_sim_M0MEMET_space_time A,B,C) while the frequency of local extinctions consistently rises during periods of increased environmental variability (i.e. 2.5-0 Ma), impacting $\alpha$ diversity but without any global extinction (@fig-single_sim_M0MEMET_space_time G,H,I).
+
+The described cycle can be depicted at @fig-simple, where a flowchart illustrates eco-evolutionary dynamics observed in M0, ME, and MET, which are relevant to biodiversity. All processes depicted are strongly influenced by dispersal and landscape structure. Changes in diversity influence heterospecific competition. Subsequently, a transition occurs towards niche specialization, suggesting that species evolve to occupy specific ecological niches as they compete, such as a decrease in thermal range ($\omega$). This specialization may lead to a reduction in species' geographical range (i.e. local extinctions). If global extinction happens, diversity is negatively impacted (red arrow @fig-simple). Conversely, if extinction is averted, the flow progresses to isolation, suggesting that species may become isolated in particular habitats or environments. From isolation, there arises potential for speciation though isolation fostering the emergence of new species (if they global extinction is avoided). If speciation unfolds, the flow completes a loop, contributing to diversity (blue arrow @fig-simple). Overall, @fig-simple exemplifies the interconnectedness of ecological and evolutionary processes and the delicate balance between competition, niche specialization, geographical range changes, extinction, isolation, and speciation in shaping biodiversity dynamics. It highlights a cyclic pattern in a delicate balance where local extinction can stimulate renewed diversity.
+
+::: {#fig-simple .mermaid}
+```{mermaid, fig.height: 4}
+  flowchart TD;
+      A[Diversity]-->B[Competition];
+      B-->C[Specialization];
+      C-->D[Range Decrease];
+      D-->E{Extinction?};
+      E -- Yes -->A;
+      E -- No --> F[Isolation];
+      F-->G{Speciation?};
+      G -- Yes -->A;
+      linkStyle 4 stroke:red
+      linkStyle 7 stroke:green
+```
+
+Flowchart of general eco-evolutionary dynamics in M0, ME, and MET, showing one simulated feedback loop relevant to biodiversity when competition is present and there is appropriate environmental structure and dispersal ability.
+:::
+
+```{r}
+#| label: fig-single_sim_M0_ME_MET_traits_phylo
+#| fig-height: 6
+#| fig-cap: Trait change through time for a single simulation, i.e. config_1119, with same initial parameters d=0.367, l=0.956 for M0, ME and MET, respectively with 63, 46 and 69 species alive at the final timestep.
+
+fivehundrets <- c("config_M0_1119","config_ME_1119", "config_MET_1119")
+ssltt <- list()
+ita <- 0
+for (i in 1:3){
+  # i <- 1
+  ssltt[[i]] <- readRDS(here(pls$dir_base,paste0("../../5_supplementary_information/",fivehundrets[i],"/ss_t_500-0_1119.rds")))
+}
+set_par(4*3,3)
+all_trss <- cbind(ssltt[[1]][[2]], ssltt[[2]][[2]])
+legend_temp <- c(expression("Mean temp. (T)"), expression("Temp. Width ("~omega~")") , expression("Tolerance to heterospecifics (l)"), expression("Dispersal (d)"))
+traitssss <- c("mean_temp", "temp_width", "competition", "dispersal")
+  for (trt_i in traitssss){
+    # trt_i <- "dispersal"
+    ita <- ita+1
+    all_trss_i <- all_trss[,grep(trt_i, colnames(all_trss))]
+    yrange <- range(all_trss_i, na.rm = T)
+    plot_trait_phylogeny(ssltt[[1]][[2]],trait=trt_i, type=yrange, ylab=legend_temp[traitssss%in%trt_i])
+    if (trt_i=="mean_temp"){
+      title("M0")
+    }
+    title(LETTERS[ita], adj=0)
+    ita <- ita+1
+    plot_trait_phylogeny(ssltt[[2]][[2]],trait=trt_i, type=yrange, ylab=legend_temp[traitssss%in%trt_i])
+    if (trt_i=="mean_temp"){
+      title("ME")
+    }
+        title(LETTERS[ita], adj=0)
+    ita <- ita+1
+    plot_trait_phylogeny(ssltt[[3]][[2]],trait =trt_i, type=yrange, ylab=legend_temp[traitssss%in%trt_i])
+    if (trt_i=="mean_temp"){
+      title("MET")
+    }
+        title(LETTERS[ita], adj=0)
+    ita <- ita+1
+  }
+```
+
+```{r}
+#| label: fig-single_sim_M0MEMET_space_time
+#| fig-height: 6
+#| fig-cap: Trait change through time for a single simulation, with same initial parameters d=0.367, l=0.956 for ME and MET, respectively with 63, 46 and 69 species alive at the final timestep.
+set_par(3*3,3)
+ita <- 1
+for (i in 1:3){
+  rds_i <- readRDS(here(paste0("code/5_supplementary_information/",fivehundrets[i],"/sgen3sis.rds")))
+  # rds_i$summary$`richness-final`[is.na(rds_i$summary$`richness-final`)]
+    plot(rasterFromXYZ(rds_i$summary$`richness-final`), col=c("navajowhite3",gen3sis:::color_richness_non_CVDCBP(40)), axes=F, main=names(sss)[i])
+    title(LETTERS[ita], adj=0)
+    ita <- ita+1
+}
+
+for (i in 1:3){
+    rds_i <- readRDS(here(paste0("code/5_supplementary_information/",fivehundrets[i],"/sgen3sis.rds")))
+  plot(rds_i$summary$phylo_summary[,"alive"], type='l', ylab=expression(gamma), xaxt='n',xlab='Ma', ylim=c(0,69))
+axis(1, at=c(1,251,501), labels = c(5,2.5,0))
+text(10,60, paste("Final gamma=",sss[[i]]$stats$t$n_sp_alive_t_0[1119] ), adj=0)
+    title(LETTERS[ita], adj=0)
+    ita <- ita+1
+}
+
+for (i in 1:3){
+  plot(rowMeans(ssltt[[i]]$spatial_sps$`-1`, na.rm=T), type='l', ylim=c(0,140), xaxt='n', xlab="Ma", ylab="Mean local extinctions")
+  axis(1, at=c(1,251,501), labels = c(5,2.5,0))
+#  boxplot(ssltt[[i]]$spatial_sps$`-1`, na.rm=T)
+      title(LETTERS[ita], adj=0)
+    ita <- ita+1
+}
+
+```
+
+.
+
+.
+
+.
+
+.
+
+.
+
+.
+
+.
+
+.
+
+.
+
+.
+
+.
+
+.
+
+.
+
+.
+
+.
+
+::: {#references}
+# References
+:::
