@@ -38,14 +38,17 @@ Federseestation, Bad Buchau, Germany
 
 <img src="https://raw.githubusercontent.com/ohagen/DispDiv3/main/inst/logo/dispdiv3.png" alt="gen3sis art" class="top-left-image">
 
-This workshop aims to: disseminate knowledge on utilizing gen3sis for various research inquiries, and provide practical experience in the mechanistic modeling cycle. The course will briefly introduce the philosophical context of natural science and the principles of mechanistic models. Participants will engage in hands-on exercises, applying gen3sis to explore hypotheses concerning the genesis and maintenance of biodiversity within the R programming environment, with opportunities to design their own research questions. The workshop primarily employs simulated data, culminating in insights on connecting processes and patterns within biodiversity research. To prepare, bring a laptop with R and the latest version of gen3sis. If you want to come even more prepared and make the most of the course, I recommend reading the [methods paper](https://doi.org/10.1371/journal.pbio.3001340) and having a look at this [repo](https://github.com/ohagen/DispDiv3), containing some of the materials (i.e. landscapes and configuration files) used here.
+This workshop is designed to provide foundational knowledge on how to use gen3sis for various research questions, which is crucial for defining models within the modeling cycle. The course will briefly introduce the philosophical context of natural science and the principles of mechanistic models. 
+Participants will engage in hands-on exercises, applying gen3sis to explore hypotheses concerning the genesis and maintenance of biodiversity within the R programming environment. Practical experiences will equip attendees with the necessary background to craft their own biodiversity models. 
+The workshop mainly uses simulated data, leading to valuable insights about the interplay between processes and patterns in biodiversity research.
+Please bring a laptop equipped with R and the latest version of gen3sis to participate effectively. For those eager to maximize their workshop experience, I recommend reading the [methods paper](https://doi.org/10.1371/journal.pbio.3001340) and exploring this [repo](https://github.com/ohagen/DispDiv3) which includes some of the materials (such as landscapes and configuration files) we'll be using. The related article is forthcoming and currently in press.
 
 ## Introduction
 
-Welcome to the workshop on `gen3sis`, an R package designed for simulating ecological e evolutionary dynamics over time and space. In this two-hour workshop, we will:
+Welcome to the workshop on `gen3sis`, an R package designed for simulating ecological e evolutionary dynamics over time and space. In this workshop, we will:
 
 1.  Set up the R environment
-2.  Understand the basics of `gen3sis`
+2.  Understand the basics
 3.  Run a basic simulation
 4.  Customize simulations
 5.  Troubleshoot
@@ -59,15 +62,17 @@ We'll need the `gen3sis` R-package along with configuration and landscapes from 
 require(gen3sis)
 # get package version
 print(paste("gen3sis version:", packageVersion("gen3sis")))
+# package here robust simple path management
+require(here)
 # we will also use terra for landscape visualization
 require(terra)
-# package here for simple directory configuration
-require(here)
-# package ape for phylogenetic analysis
+# package ape used for plotting phylogenies
 require(ape)
 ```
 
-Get the landscape and configuration files. If you dont like waiting and would like your simulations to run faster, download this [folder](https://www.dropbox.com/scl/fo/lzxzee5hi0cqiu6tglmgk/AFrnEBV83Sd6tdo1Kdc-m7g?rlkey=9a49gsorhikzvt6f4oibjdtkj&dl=0) at dropbox and place the *distances_full* folder inside the *space* folder, along the *distances_local* folder.
+To access the landscape and configuration files, please download the necessary materials from this Dropbox folder. For faster simulation speeds, place the distances_full folder inside the space folder, alongside the distances_local folder.
+
+Get the landscape and configuration files. If you don't like waiting and would like your simulations to run faster, download this [dropbox folder](https://www.dropbox.com/scl/fo/lzxzee5hi0cqiu6tglmgk/AFrnEBV83Sd6tdo1Kdc-m7g?rlkey=9a49gsorhikzvt6f4oibjdtkj&dl=0) and place it, i.e. the *distances_full* folder, inside the *space* folder along side the *distances_local* folder.
 
 ```{r, echo=FALSE}
 here::i_am("gen3sis_workshop.qmd")
@@ -82,9 +87,9 @@ list.files(landscape_dir)
 config_file <- here("config/config_simple.R")
 ```
 
-## 2. Understanding the basics of `gen3sis`
+## 2. Understanding the basics
 
-Gen3sis is an engine that simulates eco-evolutionary processes at the population level. It utilizes a landscape containing environmental variables that evolve over time, alongside a configuration file housing the eco-evolutionary rules.
+Gen3sis is an engine that simulates eco-evolutionary processes at the population level. It utilizes a landscape containing environmental variables that evolve over time, alongside a configuration file housing the eco-evolutionary rules. Read more [here](https://doi.org/10.1371/journal.pbio.3001340)
 
 ### 2.1 Landscape
 
@@ -321,11 +326,15 @@ Creating or modifying a gen3sis configuration can definitely lead to some weird 
 
 Here are some handy debugging tips for when you run into those pesky errors:
 
-browser(): This function lets you pause the execution and explore what's going on. It's like a pit stop where you can check out variables and step through the code. Hint: you can also condition browser calls.
+browser(): This function lets you pause the execution and explore what's going on. It's like a pit stop where you can check out variables and step through the code.
 
-```{r, echo=FALSE}
+To make your R session enter browser mode whenever you hit an error, you can use: *options(error = recover)*. This will help you diagnose and fix issues more easily.
+
+You can also condition browser calls, which is very useful when you want to stop execution at a specific time step or when a certain condition is met. Here's an example:
+
+```{r, eval=FALSE}
 # Use 'stop_time' to halt execution at a specific timestep in the landscape object:
-stop_time <- "64"
+stop_time <- "62"
 
 get_dispersal_values <- function(n, species, landscape, config) {
     if (landscape$timestep == stop_time) {
@@ -339,7 +348,6 @@ get_dispersal_values <- function(n, species, landscape, config) {
     }
 }
 ```
-To make your R session enter browser mode whenever you hit an error, you can use:
-*options(error = recover)*. This will help you diagnose and fix issues more easily.
+
 
 ![](https://64.media.tumblr.com/f5436f265630043b4163b3b796436229/tumblr_nerv5zwzCr1sgl0ajo1_500.gif)

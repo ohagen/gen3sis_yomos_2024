@@ -83,7 +83,7 @@ pre > code.sourceCode > span > a:first-child::before { text-decoration: underlin
   <li><a href="#preamble" id="toc-preamble" class="nav-link active" data-scroll-target="#preamble">Preamble</a></li>
   <li><a href="#introduction" id="toc-introduction" class="nav-link" data-scroll-target="#introduction">Introduction</a></li>
   <li><a href="#setting-up-the-r-environment" id="toc-setting-up-the-r-environment" class="nav-link" data-scroll-target="#setting-up-the-r-environment">1. Setting up the R environment</a></li>
-  <li><a href="#understanding-the-basics-of-gen3sis" id="toc-understanding-the-basics-of-gen3sis" class="nav-link" data-scroll-target="#understanding-the-basics-of-gen3sis">2. Understanding the basics of <code>gen3sis</code></a>
+  <li><a href="#understanding-the-basics" id="toc-understanding-the-basics" class="nav-link" data-scroll-target="#understanding-the-basics">2. Understanding the basics</a>
   <ul class="collapse">
   <li><a href="#landscape" id="toc-landscape" class="nav-link" data-scroll-target="#landscape">2.1 Landscape</a></li>
   <li><a href="#config" id="toc-config" class="nav-link" data-scroll-target="#config">2.2 Config</a></li>
@@ -142,14 +142,14 @@ Federseestation, Bad Buchau, Germany</p>
     }
 </style>
 <p><img src="https://raw.githubusercontent.com/ohagen/DispDiv3/main/inst/logo/dispdiv3.png" alt="gen3sis art" class="top-left-image"></p>
-<p>This workshop aims to: disseminate knowledge on utilizing gen3sis for various research inquiries, and provide practical experience in the mechanistic modeling cycle. The course will briefly introduce the philosophical context of natural science and the principles of mechanistic models. Participants will engage in hands-on exercises, applying gen3sis to explore hypotheses concerning the genesis and maintenance of biodiversity within the R programming environment, with opportunities to design their own research questions. The workshop primarily employs simulated data, culminating in insights on connecting processes and patterns within biodiversity research. To prepare, bring a laptop with R and the latest version of gen3sis. If you want to come even more prepared and make the most of the course, I recommend reading the <a href="https://doi.org/10.1371/journal.pbio.3001340">methods paper</a> and having a look at this <a href="https://github.com/ohagen/DispDiv3">repo</a>, containing some of the materials (i.e.&nbsp;landscapes and configuration files) used here.</p>
+<p>This workshop is designed to provide foundational knowledge on how to use gen3sis for various research questions, which is crucial for defining models within the modeling cycle. The course will briefly introduce the philosophical context of natural science and the principles of mechanistic models. Participants will engage in hands-on exercises, applying gen3sis to explore hypotheses concerning the genesis and maintenance of biodiversity within the R programming environment. Practical experiences will equip attendees with the necessary background to craft their own biodiversity models. The workshop mainly uses simulated data, leading to valuable insights about the interplay between processes and patterns in biodiversity research. Please bring a laptop equipped with R and the latest version of gen3sis to participate effectively. For those eager to maximize their workshop experience, I recommend reading the <a href="https://doi.org/10.1371/journal.pbio.3001340">methods paper</a> and exploring this <a href="https://github.com/ohagen/DispDiv3">repo</a> which includes some of the materials (such as landscapes and configuration files) we’ll be using. The related article is forthcoming and currently in press.</p>
 </section>
 <section id="introduction" class="level2">
 <h2 class="anchored" data-anchor-id="introduction">Introduction</h2>
-<p>Welcome to the workshop on <code>gen3sis</code>, an R package designed for simulating ecological e evolutionary dynamics over time and space. In this two-hour workshop, we will:</p>
+<p>Welcome to the workshop on <code>gen3sis</code>, an R package designed for simulating ecological e evolutionary dynamics over time and space. In this workshop, we will:</p>
 <ol type="1">
 <li>Set up the R environment</li>
-<li>Understand the basics of <code>gen3sis</code></li>
+<li>Understand the basics</li>
 <li>Run a basic simulation</li>
 <li>Customize simulations</li>
 <li>Troubleshoot</li>
@@ -166,14 +166,15 @@ Federseestation, Bad Buchau, Germany</p>
 <div class="cell-output cell-output-stdout">
 <pre><code>[1] "gen3sis version: 1.5.11"</code></pre>
 </div>
-<div class="sourceCode cell-code" id="cb3"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb3-1"><a href="#cb3-1" aria-hidden="true" tabindex="-1"></a><span class="co"># we will also use terra for landscape visualization</span></span>
-<span id="cb3-2"><a href="#cb3-2" aria-hidden="true" tabindex="-1"></a><span class="fu">require</span>(terra)</span>
-<span id="cb3-3"><a href="#cb3-3" aria-hidden="true" tabindex="-1"></a><span class="co"># package here for simple directory configuration</span></span>
-<span id="cb3-4"><a href="#cb3-4" aria-hidden="true" tabindex="-1"></a><span class="fu">require</span>(here)</span>
-<span id="cb3-5"><a href="#cb3-5" aria-hidden="true" tabindex="-1"></a><span class="co"># package ape for phylogenetic analysis</span></span>
+<div class="sourceCode cell-code" id="cb3"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb3-1"><a href="#cb3-1" aria-hidden="true" tabindex="-1"></a><span class="co"># package here robust simple path management</span></span>
+<span id="cb3-2"><a href="#cb3-2" aria-hidden="true" tabindex="-1"></a><span class="fu">require</span>(here)</span>
+<span id="cb3-3"><a href="#cb3-3" aria-hidden="true" tabindex="-1"></a><span class="co"># we will also use terra for landscape visualization</span></span>
+<span id="cb3-4"><a href="#cb3-4" aria-hidden="true" tabindex="-1"></a><span class="fu">require</span>(terra)</span>
+<span id="cb3-5"><a href="#cb3-5" aria-hidden="true" tabindex="-1"></a><span class="co"># package ape used for plotting phylogenies</span></span>
 <span id="cb3-6"><a href="#cb3-6" aria-hidden="true" tabindex="-1"></a><span class="fu">require</span>(ape)</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
 </div>
-<p>Get the landscape and configuration files. If you dont like waiting and would like your simulations to run faster, download this <a href="https://www.dropbox.com/scl/fo/lzxzee5hi0cqiu6tglmgk/AFrnEBV83Sd6tdo1Kdc-m7g?rlkey=9a49gsorhikzvt6f4oibjdtkj&amp;dl=0">folder</a> at dropbox and place the <em>distances_full</em> folder inside the <em>space</em> folder, along the <em>distances_local</em> folder.</p>
+<p>To access the landscape and configuration files, please download the necessary materials from this Dropbox folder. For faster simulation speeds, place the distances_full folder inside the space folder, alongside the distances_local folder.</p>
+<p>Get the landscape and configuration files. If you don’t like waiting and would like your simulations to run faster, download this <a href="https://www.dropbox.com/scl/fo/lzxzee5hi0cqiu6tglmgk/AFrnEBV83Sd6tdo1Kdc-m7g?rlkey=9a49gsorhikzvt6f4oibjdtkj&amp;dl=0">dropbox folder</a> and place it, i.e.&nbsp;the <em>distances_full</em> folder, inside the <em>space</em> folder along side the <em>distances_local</em> folder.</p>
 <div class="cell">
 <div class="sourceCode cell-code" id="cb4"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb4-1"><a href="#cb4-1" aria-hidden="true" tabindex="-1"></a><span class="co"># set path to directory containing the landscape</span></span>
 <span id="cb4-2"><a href="#cb4-2" aria-hidden="true" tabindex="-1"></a>landscape_dir <span class="ot">&lt;-</span> <span class="fu">here</span>(<span class="st">"space"</span>)</span>
@@ -186,9 +187,9 @@ Federseestation, Bad Buchau, Germany</p>
 <span id="cb6-2"><a href="#cb6-2" aria-hidden="true" tabindex="-1"></a>config_file <span class="ot">&lt;-</span> <span class="fu">here</span>(<span class="st">"config/config_simple.R"</span>)</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
 </div>
 </section>
-<section id="understanding-the-basics-of-gen3sis" class="level2">
-<h2 class="anchored" data-anchor-id="understanding-the-basics-of-gen3sis">2. Understanding the basics of <code>gen3sis</code></h2>
-<p>Gen3sis is an engine that simulates eco-evolutionary processes at the population level. It utilizes a landscape containing environmental variables that evolve over time, alongside a configuration file housing the eco-evolutionary rules.</p>
+<section id="understanding-the-basics" class="level2">
+<h2 class="anchored" data-anchor-id="understanding-the-basics">2. Understanding the basics</h2>
+<p>Gen3sis is an engine that simulates eco-evolutionary processes at the population level. It utilizes a landscape containing environmental variables that evolve over time, alongside a configuration file housing the eco-evolutionary rules. Read more <a href="https://doi.org/10.1371/journal.pbio.3001340">here</a></p>
 <section id="landscape" class="level3">
 <h3 class="anchored" data-anchor-id="landscape">2.1 Landscape</h3>
 <div class="quarto-figure quarto-figure-center">
@@ -422,8 +423,25 @@ Federseestation, Bad Buchau, Germany</p>
 <h2 class="anchored" data-anchor-id="troubleshoot">5. Troubleshoot</h2>
 <p>Creating or modifying a gen3sis configuration can definitely lead to some weird errors, especially since it’s so flexible. That’s the downside, along with the steep learning curve. But if you’re not too overwhelmed, you’re doing great!</p>
 <p>Here are some handy debugging tips for when you run into those pesky errors:</p>
-<p>browser(): This function lets you pause the execution and explore what’s going on. It’s like a pit stop where you can check out variables and step through the code. Hint: you can also condition browser calls.</p>
+<p>browser(): This function lets you pause the execution and explore what’s going on. It’s like a pit stop where you can check out variables and step through the code.</p>
 <p>To make your R session enter browser mode whenever you hit an error, you can use: <em>options(error = recover)</em>. This will help you diagnose and fix issues more easily.</p>
+<p>You can also condition browser calls, which is very useful when you want to stop execution at a specific time step or when a certain condition is met. Here’s an example:</p>
+<div class="cell">
+<div class="sourceCode cell-code" id="cb29"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb29-1"><a href="#cb29-1" aria-hidden="true" tabindex="-1"></a><span class="co"># Use 'stop_time' to halt execution at a specific timestep in the landscape object:</span></span>
+<span id="cb29-2"><a href="#cb29-2" aria-hidden="true" tabindex="-1"></a>stop_time <span class="ot">&lt;-</span> <span class="st">"62"</span></span>
+<span id="cb29-3"><a href="#cb29-3" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb29-4"><a href="#cb29-4" aria-hidden="true" tabindex="-1"></a>get_dispersal_values <span class="ot">&lt;-</span> <span class="cf">function</span>(n, species, landscape, config) {</span>
+<span id="cb29-5"><a href="#cb29-5" aria-hidden="true" tabindex="-1"></a>    <span class="cf">if</span> (landscape<span class="sc">$</span>timestep <span class="sc">==</span> stop_time) {</span>
+<span id="cb29-6"><a href="#cb29-6" aria-hidden="true" tabindex="-1"></a>        <span class="fu">browser</span>()</span>
+<span id="cb29-7"><a href="#cb29-7" aria-hidden="true" tabindex="-1"></a>    }</span>
+<span id="cb29-8"><a href="#cb29-8" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb29-9"><a href="#cb29-9" aria-hidden="true" tabindex="-1"></a>    <span class="co"># You can also check the 'vars' object for the current timestep:</span></span>
+<span id="cb29-10"><a href="#cb29-10" aria-hidden="true" tabindex="-1"></a>    vars <span class="ot">&lt;-</span> <span class="fu">dynGet</span>(<span class="st">"vars"</span>, <span class="at">inherits =</span> <span class="cn">TRUE</span>)</span>
+<span id="cb29-11"><a href="#cb29-11" aria-hidden="true" tabindex="-1"></a>    <span class="cf">if</span> (vars<span class="sc">$</span>ti <span class="sc">==</span> stop_time) {</span>
+<span id="cb29-12"><a href="#cb29-12" aria-hidden="true" tabindex="-1"></a>        <span class="fu">browser</span>()</span>
+<span id="cb29-13"><a href="#cb29-13" aria-hidden="true" tabindex="-1"></a>    }</span>
+<span id="cb29-14"><a href="#cb29-14" aria-hidden="true" tabindex="-1"></a>}</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+</div>
 <p><img src="https://64.media.tumblr.com/f5436f265630043b4163b3b796436229/tumblr_nerv5zwzCr1sgl0ajo1_500.gif" class="img-fluid"></p>
 </section>
 
