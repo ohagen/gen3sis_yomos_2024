@@ -15,3 +15,8 @@ output/config_M2_TH_mod/*
 !output/config_M2_TH_mod/sgen3sis.rds
 space/distances_full
 .Rproj.user
+.Rproj.user/**/
+.Rhistory
+.RData
+.Ruserdata
+.httr-oauth
