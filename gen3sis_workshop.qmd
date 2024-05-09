@@ -16,7 +16,7 @@ execute:
 :::
 
 Yomos 2024  
-April 13-17, 2024  
+May 13-17, 2024  
 Federseestation, Bad Buchau, Germany  
 
 ::: {#right .flex-item style="flex: 1; display: flex; justify-content: center;"}
