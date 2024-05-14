@@ -21,6 +21,7 @@ Federseestation, Bad Buchau, Germany
 
 ::: {#right .flex-item style="flex: 1; display: flex; justify-content: center;"}
 <img src="qr-code-workshop.jpg" style="width: 100px;">
+https://github.com/ohagen/gen3sis_yomos_2024
 :::
 
 ## Preamble
@@ -58,16 +59,25 @@ Welcome to the workshop on `gen3sis`, an R package designed for simulating ecolo
 We'll need the `gen3sis` R-package along with configuration and landscapes from this [repo](https://github.com/ohagen/DispDiv3). Please download the repo and create a new R script in the same directory. There you can copy and paste the code from the sections bellow and for your convenience use [myscrip.R](myscript.R)
 
 ```{r}
-# install and load gen3sis
-require(gen3sis)
-# get package version
+# Function to check and install packages if they are not already installed
+load_install_pkgs <- function(package_names) {
+  for (package in package_names) {
+    if (!require(package, character.only = TRUE)) {
+      install.packages(package)
+      print(paste("Installing", package))
+      library(package, character.only = TRUE)
+    }
+  }
+}
+
+# Vector of packages to load and install if necessary
+packages_to_load <- c("gen3sis", "here", "terra", "ape")
+
+# Call the function with the vector of package names
+load_install_pkgs(packages_to_load)
+
+# print gen3sis version
 print(paste("gen3sis version:", packageVersion("gen3sis")))
-# package here robust simple path management
-require(here)
-# we will also use terra for landscape visualization
-require(terra)
-# package ape used for plotting phylogenies
-require(ape)
 ```
 
 To access the landscape and configuration files, please download the necessary materials from this Dropbox folder. For faster simulation speeds, place the distances_full folder inside the space folder, alongside the distances_local folder.
@@ -103,14 +113,10 @@ lc <- readRDS(file.path(landscape_dir,"landscapes.rds"))
 names(lc)
 # get first time step
 first_step_pos <- ncol(lc$mean_temp)
-first_step <- colnames(lc$mean_temp)[first_step_pos]
 # get first 10 sites of mean temperature for the 2 last time steps and the first (oldest) time step
 lc$mean_temp[100:110, c(1:4, first_step_pos)]
 # plot mean_temp for first and last time step
-par(mfrow=c(1,2))
-plot(r_first <- rast(lc$mean_temp[ ,c("x", "y", first_step)], type="xyz"), main="first @ 5Ma")
-plot(r_last <- rast(lc$mean_temp[ ,c("x", "y", "0")], type="xyz"), main="last @ 0Ma")
-par(mfrow=c(1,1)) # set it back
+plot(rast(lc$mean_temp[ ,c(1:3, first_step_pos)]))
 ```
 
 <div style="background-color: lightgreen; padding: 1px;">
@@ -118,7 +124,7 @@ par(mfrow=c(1,1)) # set it back
 🏋💻 **Exercise** [max 10 min] 
 Create a way to visualize the last 100 time steps of this gen3sis input. If possible think of abstracting for any x,y,z1,z2,z3... temporal data-frame. If possible, try to make a function.
 
-<details>
+**Answer:** <details>
 
 ```{r, eval=FALSE}
 # solution 1
@@ -172,7 +178,8 @@ names(cf$gen3sis$general)
 <div style="background-color: lightgreen; padding: 1px;">
 🏋💻 **Exercise** [max 10 min] 
 Open the config file config_simple and go though the eco-evolutionary rules that will be applied to the landscape.
-<details>
+
+**Answer:** <details>
 <strong>Settings</strong>
 
 We start our simulation at the latest avaiable time, i.e. 5Ma, which corresponds to time step 500 since 1 time-step = 10 kyr. We end it a the latest available time-step. Sometimes, simulations can go forever, to avoid this we limit the maximum total number of species alive in a simulation to 50000 with max_number_of_species and the maximum number of species within one site to 20000 with max_number_of_coexisting_species. This stops and flags simulations that generate too many species (time constrain). We define which traits we will consider in our simulation with traits_names, in our example, species have a dispersal ability a optimum temperature and a temperature width trait.
